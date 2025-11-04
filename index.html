@@ -115,36 +115,10 @@
             color: white;
         }
 
-        .search-container {
-            padding: 10px;
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .search-box {
-            background: #f5f5f5;
-            border-radius: 20px;
-            padding: 8px 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .search-box i {
-            color: var(--light-text);
-            margin-right: 10px;
-        }
-
-        .search-box input {
-            border: none;
-            background: none;
-            outline: none;
-            width: 100%;
-            font-size: 14px;
-        }
-
         .chat-list {
             flex: 1;
             overflow-y: auto;
+            padding: 10px 0;
         }
 
         .chat-item {
@@ -403,7 +377,6 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            /* Always visible on mobile */
             min-width: 45px;
         }
 
@@ -515,18 +488,6 @@
             object-fit: cover;
         }
 
-        .local-video {
-            position: absolute;
-            width: 180px;
-            height: 135px;
-            bottom: 15px;
-            right: 15px;
-            border: 2px solid white;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #000;
-        }
-
         /* Login Screen */
         .login-screen {
             position: absolute;
@@ -552,34 +513,47 @@
         }
 
         .login-title {
-            font-size: 24px;
-            margin-bottom: 20px;
+            font-size: 28px;
+            margin-bottom: 10px;
             color: var(--primary-color);
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mango-icon {
+            font-size: 32px;
         }
 
         .user-option {
-            padding: 15px;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            margin-bottom: 12px;
+            padding: 18px;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 15px;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            background: white;
         }
 
         .user-option:hover {
             border-color: var(--primary-color);
             background: rgba(0,132,255,0.05);
+            transform: translateY(-2px);
         }
 
         .user-option.active {
             border-color: var(--primary-color);
-            background: rgba(0,132,255,0.1);
+            background: linear-gradient(135deg, rgba(0,132,255,0.1), rgba(0,212,170,0.1));
+            box-shadow: 0 4px 15px rgba(0,132,255,0.2);
+            transform: translateY(-2px);
         }
 
         .user-name {
             font-weight: 600;
-            font-size: 16px;
+            font-size: 18px;
+            color: var(--text-color);
         }
 
         .login-button {
@@ -587,16 +561,19 @@
             color: white;
             border: none;
             border-radius: 25px;
-            padding: 12px 30px;
+            padding: 14px 30px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 25px;
             width: 100%;
             font-weight: 600;
+            transition: all 0.3s ease;
         }
 
         .login-button:hover {
             background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,132,255,0.3);
         }
 
         /* Connection Status */
@@ -738,8 +715,12 @@
     <!-- Login Screen -->
     <div class="login-screen" id="loginScreen">
         <div class="login-container">
-            <h2 class="login-title">Mango Love</h2>
-            <p style="color: var(--light-text); margin-bottom: 24px;">Select your user to start loving</p>
+            <h2 class="login-title">
+                <span class="mango-icon">🥭</span>
+                Mango Love
+                <span class="mango-icon">🥭</span>
+            </h2>
+            <p style="color: var(--light-text); margin-bottom: 24px; font-size: 18px;">Select baby to start loving ❤️</p>
             <div class="user-option" data-user="mango1">
                 <div class="user-name">Mango 1</div>
             </div>
@@ -769,22 +750,16 @@
                 </div>
             </div>
             
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search...">
-                </div>
-            </div>
-            
             <div class="chat-list">
+                <!-- Only one chat item remains -->
                 <div class="chat-item active">
                     <div class="chat-avatar">
                         <div class="default-avatar"><i class="fas fa-user"></i></div>
                         <div class="online-indicator" id="onlineIndicator" style="display: none;"></div>
                     </div>
                     <div class="chat-details">
-                        <div class="chat-name" id="contactName">Mango 2</div>
-                        <div class="chat-preview" id="chatPreview">Start loving...</div>
+                        <div class="chat-name" id="contactName">Your Love</div>
+                        <!-- REMOVED "Start loving..." preview text -->
                     </div>
                     <div class="chat-meta">
                         <div class="chat-time">Now</div>
@@ -802,7 +777,7 @@
                         <div class="online-indicator" id="chatOnlineIndicator" style="display: none;"></div>
                     </div>
                     <div>
-                        <div class="chat-header-name" id="chatContactName">Mango 2</div>
+                        <div class="chat-header-name" id="chatContactName">Your Love</div>
                         <div class="chat-header-status" id="chatContactStatus">Offline</div>
                     </div>
                 </div>
@@ -815,7 +790,7 @@
             
             <div class="messages-container" id="messagesContainer">
                 <div class="message message-system">
-                    Welcome to Mango Love! Start loving...
+                    Welcome to Mango Love! ❤️
                 </div>
             </div>
             
@@ -838,12 +813,11 @@
             <div class="caller-avatar">
                 <div class="default-avatar"><i class="fas fa-user"></i></div>
             </div>
-            <div class="caller-name" id="callerName">Mango 2</div>
+            <div class="caller-name" id="callerName">Your Love</div>
             <div class="call-status" id="callStatus">Calling...</div>
             
             <div class="video-container" id="videoContainer">
                 <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-                <video id="localVideo" class="local-video" autoplay playsinline muted></video>
             </div>
         </div>
         <div class="call-controls">
@@ -901,7 +875,7 @@
         let peerConnection;
         let isCallActive = false;
         let currentCallType = '';
-        let messages = []; // Store messages locally for persistence
+        let callEnded = false;
 
         // DOM Elements
         const loginScreen = document.getElementById('loginScreen');
@@ -918,7 +892,6 @@
         const rejectCall = document.getElementById('rejectCall');
         const endCall = document.getElementById('endCall');
         const videoContainer = document.getElementById('videoContainer');
-        const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
         const userProfilePic = document.getElementById('userProfilePic');
         const fileInput = document.getElementById('fileInput');
@@ -938,7 +911,7 @@
 
         // Update profile picture
         function updateProfilePicture(imageData) {
-            const profilePics = document.querySelectorAll('.profile-pic, .userProfilePic');
+            const profilePics = document.querySelectorAll('.profile-pic');
             profilePics.forEach(pic => {
                 const img = document.createElement('img');
                 img.src = imageData;
@@ -960,16 +933,6 @@
             localStorage.setItem('contactPic', imageData);
         }
 
-        // Initialize WebRTC
-        async function initializeWebRTC() {
-            try {
-                await navigator.mediaDevices.getUserMedia({ audio: true });
-                console.log('WebRTC initialized');
-            } catch (error) {
-                console.warn('Media access not available:', error);
-            }
-        }
-
         // Create peer connection
         function createPeerConnection() {
             peerConnection = new RTCPeerConnection(configuration);
@@ -981,17 +944,32 @@
             }
             
             peerConnection.ontrack = (event) => {
-                console.log('Received remote stream');
+                console.log('Received remote stream with tracks:', event.streams[0].getTracks().length);
                 remoteStream = event.streams[0];
                 remoteVideo.srcObject = remoteStream;
+                
+                remoteVideo.onloadedmetadata = () => {
+                    remoteVideo.play().catch(e => console.log('Video play error:', e));
+                };
             };
             
             peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
+                if (event.candidate && socket && socket.connected) {
                     socket.emit('ice-candidate', {
                         target: otherUser,
                         candidate: event.candidate
                     });
+                }
+            };
+            
+            peerConnection.onconnectionstatechange = () => {
+                console.log('Connection state:', peerConnection.connectionState);
+                
+                if (peerConnection.connectionState === 'connected') {
+                    console.log('WebRTC connection established successfully');
+                } else if (peerConnection.connectionState === 'failed' && !callEnded) {
+                    console.error('WebRTC connection failed');
+                    endCallHandler('Connection failed');
                 }
             };
         }
@@ -1023,34 +1001,48 @@
             });
             
             socket.on('incoming-call', async (data) => {
-                console.log('Incoming call:', data);
-                showIncomingCall(data);
+                console.log('Incoming call from:', data.from);
+                if (!isCallActive && !callEnded) {
+                    showIncomingCall(data);
+                }
             });
             
             socket.on('call-accepted', async (data) => {
-                console.log('Call accepted');
-                await peerConnection.setRemoteDescription(data.answer);
-                startCall();
+                console.log('Call accepted by peer');
+                if (peerConnection && data.answer) {
+                    await peerConnection.setRemoteDescription(data.answer);
+                    startCall();
+                }
             });
             
             socket.on('call-rejected', () => {
-                endCallHandler('Call rejected');
+                console.log('Call rejected by peer');
+                if (!callEnded) {
+                    endCallHandler('Call rejected');
+                }
             });
             
             socket.on('call-ended', () => {
-                endCallHandler('Call ended');
+                console.log('Call ended by peer');
+                if (!callEnded) {
+                    callEnded = true;
+                    endCallHandler('Call ended');
+                }
             });
             
             socket.on('ice-candidate', async (candidate) => {
-                if (peerConnection) {
-                    await peerConnection.addIceCandidate(candidate);
+                if (peerConnection && candidate) {
+                    try {
+                        await peerConnection.addIceCandidate(candidate);
+                    } catch (error) {
+                        console.error('Error adding ICE candidate:', error);
+                    }
                 }
             });
             
             socket.on('new-message', (messageData) => {
                 if (messageData.sender === otherUser) {
                     addMessage('received', messageData.text, new Date(messageData.timestamp));
-                    messages.push(messageData);
                 }
             });
         }
@@ -1068,20 +1060,27 @@
             createPeerConnection();
             
             if (data.offer) {
-                peerConnection.setRemoteDescription(data.offer);
+                peerConnection.setRemoteDescription(data.offer)
+                    .then(() => {
+                        console.log('Remote description set for incoming call');
+                    })
+                    .catch(error => {
+                        console.error('Error setting remote description:', error);
+                    });
             }
         }
 
         // Start call
-        async function startCall() {
+        function startCall() {
             isCallActive = true;
+            callEnded = false;
             callStatus.textContent = `${currentCallType} call connected`;
             acceptCall.style.display = 'none';
             rejectCall.style.display = 'none';
             endCall.style.display = 'flex';
             
-            if (currentCallType === 'video' && localStream) {
-                localVideo.srcObject = localStream;
+            if (currentCallType === 'video') {
+                videoContainer.style.display = 'block';
             }
         }
 
@@ -1093,6 +1092,7 @@
             }
             
             currentCallType = callType;
+            callEnded = false;
             
             try {
                 const constraints = {
@@ -1101,10 +1101,7 @@
                 };
                 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                if (callType === 'video') {
-                    localVideo.srcObject = localStream;
-                }
+                console.log('Local stream obtained with tracks:', localStream.getTracks().length);
                 
                 createPeerConnection();
                 
@@ -1140,10 +1137,11 @@
                 };
                 
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log('Local stream obtained for accepting call with tracks:', localStream.getTracks().length);
                 
-                if (currentCallType === 'video') {
-                    localVideo.srcObject = localStream;
-                }
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
                 
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
@@ -1169,12 +1167,17 @@
 
         // End call
         function endCallHandler(reason) {
+            if (callEnded) return;
+            
+            callEnded = true;
             isCallActive = false;
             callScreen.style.display = 'none';
             videoContainer.style.display = 'none';
             
             if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
+                localStream.getTracks().forEach(track => {
+                    track.stop();
+                });
                 localStream = null;
             }
             
@@ -1183,11 +1186,15 @@
                 peerConnection = null;
             }
             
-            socket.emit('end-call', { target: otherUser });
+            if (socket && socket.connected && reason !== 'Call ended' && reason !== 'Call rejected') {
+                socket.emit('end-call', { target: otherUser });
+            }
             
-            if (reason) {
+            if (reason && reason !== 'Call rejected' && !reason.includes('Failed')) {
                 addMessage('system', `${currentCallType} call ${reason}`, new Date());
             }
+            
+            console.log('Call ended:', reason);
         }
 
         // Update user status
@@ -1215,11 +1222,10 @@
             
             socket.emit('send-message', messageData);
             addMessage('sent', text, new Date());
-            messages.push(messageData);
             messageInput.value = '';
         }
 
-        // Add message (permanent until deleted)
+        // Add message
         function addMessage(type, text, timestamp) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message message-${type}`;
@@ -1272,7 +1278,6 @@
             currentUser = selected.dataset.user;
             otherUser = currentUser === 'mango1' ? 'mango2' : 'mango1';
             
-            // Update UI
             document.getElementById('userName').textContent = currentUser === 'mango1' ? 'Mango 1' : 'Mango 2';
             document.getElementById('contactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
             document.getElementById('chatContactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
@@ -1285,7 +1290,7 @@
                 userId: socket.id
             });
             
-            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! Start loving.`, new Date());
+            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! ❤️`, new Date());
         }
 
         // Event listeners
@@ -1313,10 +1318,9 @@
         userProfilePic.addEventListener('click', changeProfilePicture);
 
         // Initialize app
-        async function initApp() {
+        function initApp() {
             loadProfilePictures();
             initializeSocket();
-            await initializeWebRTC();
         }
 
         // Start app
