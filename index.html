@@ -115,6 +115,8 @@
             color: white;
         }
 
+        /* REMOVED SEARCH CONTAINER */
+
         .chat-list {
             flex: 1;
             overflow-y: auto;
@@ -488,6 +490,8 @@
             object-fit: cover;
         }
 
+        /* REMOVED LOCAL VIDEO PIP */
+
         /* Login Screen */
         .login-screen {
             position: absolute;
@@ -527,53 +531,21 @@
             font-size: 32px;
         }
 
-        .user-option {
-            padding: 18px;
-            border: 3px solid var(--border-color);
-            border-radius: 12px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .user-option:hover {
-            border-color: var(--primary-color);
-            background: rgba(0,132,255,0.05);
-            transform: translateY(-2px);
-        }
-
-        .user-option.active {
-            border-color: var(--primary-color);
-            background: linear-gradient(135deg, rgba(0,132,255,0.1), rgba(0,212,170,0.1));
-            box-shadow: 0 4px 15px rgba(0,132,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 18px;
-            color: var(--text-color);
-        }
-
         .login-button {
             background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 25px;
-            padding: 14px 30px;
+            padding: 12px 30px;
             font-size: 16px;
             cursor: pointer;
-            margin-top: 25px;
+            margin-top: 20px;
             width: 100%;
             font-weight: 600;
-            transition: all 0.3s ease;
         }
 
         .login-button:hover {
             background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,132,255,0.3);
         }
 
         /* Connection Status */
@@ -750,6 +722,8 @@
                 </div>
             </div>
             
+            <!-- REMOVED SEARCH CONTAINER -->
+            
             <div class="chat-list">
                 <!-- Only one chat item remains -->
                 <div class="chat-item active">
@@ -759,7 +733,7 @@
                     </div>
                     <div class="chat-details">
                         <div class="chat-name" id="contactName">Your Love</div>
-                        <!-- REMOVED "Start loving..." preview text -->
+                        <div class="chat-preview" id="chatPreview">Start loving...</div>
                     </div>
                     <div class="chat-meta">
                         <div class="chat-time">Now</div>
@@ -790,7 +764,7 @@
             
             <div class="messages-container" id="messagesContainer">
                 <div class="message message-system">
-                    Welcome to Mango Love! ❤️
+                    Welcome to Mango Love! Start loving... ❤️
                 </div>
             </div>
             
@@ -818,6 +792,7 @@
             
             <div class="video-container" id="videoContainer">
                 <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+                <!-- REMOVED LOCAL VIDEO PIP -->
             </div>
         </div>
         <div class="call-controls">
@@ -875,7 +850,7 @@
         let peerConnection;
         let isCallActive = false;
         let currentCallType = '';
-        let callEnded = false;
+        let callEnded = false; // Prevent infinite call end messages
 
         // DOM Elements
         const loginScreen = document.getElementById('loginScreen');
@@ -937,22 +912,26 @@
         function createPeerConnection() {
             peerConnection = new RTCPeerConnection(configuration);
             
+            // Add local stream tracks
             if (localStream) {
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
             }
             
+            // Handle incoming remote stream - FIXED for bidirectional video
             peerConnection.ontrack = (event) => {
                 console.log('Received remote stream with tracks:', event.streams[0].getTracks().length);
                 remoteStream = event.streams[0];
                 remoteVideo.srcObject = remoteStream;
                 
+                // Ensure video plays
                 remoteVideo.onloadedmetadata = () => {
                     remoteVideo.play().catch(e => console.log('Video play error:', e));
                 };
             };
             
+            // Handle ICE candidates
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate && socket && socket.connected) {
                     socket.emit('ice-candidate', {
@@ -962,6 +941,7 @@
                 }
             };
             
+            // Connection state handling
             peerConnection.onconnectionstatechange = () => {
                 console.log('Connection state:', peerConnection.connectionState);
                 
@@ -988,6 +968,7 @@
                 document.getElementById('connectionStatus').style.background = 'rgba(0,0,0,0.8)';
             });
             
+            // User status
             socket.on('user-online', (userData) => {
                 if (userData.username === otherUser) {
                     updateUserStatus(true);
@@ -1000,6 +981,7 @@
                 }
             });
             
+            // Incoming call - FIXED
             socket.on('incoming-call', async (data) => {
                 console.log('Incoming call from:', data.from);
                 if (!isCallActive && !callEnded) {
@@ -1040,6 +1022,7 @@
                 }
             });
             
+            // Messages
             socket.on('new-message', (messageData) => {
                 if (messageData.sender === otherUser) {
                     addMessage('received', messageData.text, new Date(messageData.timestamp));
@@ -1057,8 +1040,10 @@
                 videoContainer.style.display = 'block';
             }
             
+            // Create peer connection for incoming call
             createPeerConnection();
             
+            // Set remote description
             if (data.offer) {
                 peerConnection.setRemoteDescription(data.offer)
                     .then(() => {
@@ -1084,7 +1069,7 @@
             }
         }
 
-        // Initiate call
+        // Initiate call - FIXED with proper media handling
         async function initiateCall(callType) {
             if (!socket.connected) {
                 alert('Not connected to server');
@@ -1095,6 +1080,7 @@
             callEnded = false;
             
             try {
+                // Get media stream
                 const constraints = {
                     audio: true,
                     video: callType === 'video'
@@ -1128,9 +1114,10 @@
             }
         }
 
-        // Accept call
+        // Accept call - FIXED with proper media handling
         async function acceptIncomingCall() {
             try {
+                // Get media stream
                 const constraints = {
                     audio: true,
                     video: currentCallType === 'video'
@@ -1139,6 +1126,7 @@
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 console.log('Local stream obtained for accepting call with tracks:', localStream.getTracks().length);
                 
+                // Add local tracks to existing peer connection
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
@@ -1165,7 +1153,7 @@
             endCallHandler('Call rejected');
         }
 
-        // End call
+        // End call - FIXED to prevent infinite messages
         function endCallHandler(reason) {
             if (callEnded) return;
             
@@ -1174,6 +1162,7 @@
             callScreen.style.display = 'none';
             videoContainer.style.display = 'none';
             
+            // Stop all tracks
             if (localStream) {
                 localStream.getTracks().forEach(track => {
                     track.stop();
@@ -1186,10 +1175,12 @@
                 peerConnection = null;
             }
             
+            // Notify other user only if we're the one ending the call
             if (socket && socket.connected && reason !== 'Call ended' && reason !== 'Call rejected') {
                 socket.emit('end-call', { target: otherUser });
             }
             
+            // Add call log to chat only once and only for specific reasons
             if (reason && reason !== 'Call rejected' && !reason.includes('Failed')) {
                 addMessage('system', `${currentCallType} call ${reason}`, new Date());
             }
@@ -1225,7 +1216,7 @@
             messageInput.value = '';
         }
 
-        // Add message
+        // Add message (permanent until deleted)
         function addMessage(type, text, timestamp) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message message-${type}`;
@@ -1278,6 +1269,7 @@
             currentUser = selected.dataset.user;
             otherUser = currentUser === 'mango1' ? 'mango2' : 'mango1';
             
+            // Update UI
             document.getElementById('userName').textContent = currentUser === 'mango1' ? 'Mango 1' : 'Mango 2';
             document.getElementById('contactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
             document.getElementById('chatContactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
@@ -1290,7 +1282,7 @@
                 userId: socket.id
             });
             
-            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! ❤️`, new Date());
+            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! Start loving. ❤️`, new Date());
         }
 
         // Event listeners
@@ -1318,7 +1310,7 @@
         userProfilePic.addEventListener('click', changeProfilePicture);
 
         // Initialize app
-        function initApp() {
+        async function initApp() {
             loadProfilePictures();
             initializeSocket();
         }
