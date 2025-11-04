@@ -24,6 +24,10 @@ app.get('/', (req, res) => {
 const users = new Map();
 const userSockets = new Map();
 
+// Store messages with deduplication
+let messages = [];
+const processedMessages = new Set();
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -42,7 +46,7 @@ io.on('connection', (socket) => {
     socket.emit('online-users', onlineUsers);
   });
 
-  // WebRTC Signaling - FIXED
+  // WebRTC Signaling - FIXED with proper error handling
   socket.on('call-user', (data) => {
     const targetUser = users.get(data.target);
     if (targetUser && targetUser.online) {
@@ -85,32 +89,41 @@ io.on('connection', (socket) => {
   socket.on('end-call', (data) => {
     const targetUser = users.get(data.target);
     if (targetUser && targetUser.online) {
-      socket.to(targetUser.socketId).emit('call-ended');
+      socket.to(targetUser.socketId).emit('call-ended', { from: data.from });
     }
   });
 
-  // Message handling with persistence
+  // Message handling with deduplication
   socket.on('send-message', (messageData) => {
-    // Store message (in production, use database)
-    if (!global.messages) global.messages = [];
-    global.messages.push(messageData);
+    // Prevent duplicate messages
+    const messageKey = `${messageData.id}_${messageData.timestamp}`;
+    if (processedMessages.has(messageKey)) {
+      return; // Skip if already processed
+    }
     
-    // Broadcast to both users
+    processedMessages.add(messageKey);
+    
+    // Store message
+    messages.push(messageData);
+    
+    // Keep only last 100 messages to prevent memory issues
+    if (messages.length > 100) {
+      messages = messages.slice(-50);
+    }
+    
+    // Broadcast to both users - only once
     io.emit('new-message', messageData);
+    console.log(`Message sent from ${messageData.sender}: ${messageData.text}`);
   });
 
   socket.on('delete-message', (data) => {
-    if (global.messages) {
-      global.messages = global.messages.filter(msg => msg.id !== data.messageId);
-    }
+    messages = messages.filter(msg => msg.id !== data.messageId);
     io.emit('message-deleted', { messageId: data.messageId });
   });
 
   // Get message history
   socket.on('get-messages', () => {
-    if (global.messages) {
-      socket.emit('message-history', global.messages);
-    }
+    socket.emit('message-history', messages);
   });
 
   socket.on('disconnect', () => {
