@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mango Chat</title>
+    <title>Mango Love</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -173,6 +173,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            overflow: hidden;
         }
 
         .chat-avatar img {
@@ -258,6 +259,7 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            overflow: hidden;
         }
 
         .chat-header-avatar img {
@@ -401,6 +403,8 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
+            /* Always visible on mobile */
+            min-width: 45px;
         }
 
         .send-button:hover {
@@ -438,6 +442,14 @@
             align-items: center;
             justify-content: center;
             border: 4px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+
+        .caller-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
         }
 
         .caller-avatar .default-avatar {
@@ -668,6 +680,7 @@
             color: var(--light-text);
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -677,6 +690,7 @@
             .sidebar {
                 width: 100%;
                 height: 30%;
+                min-width: auto;
             }
             .chat-area {
                 width: 100%;
@@ -684,6 +698,33 @@
             }
             .message {
                 max-width: 85%;
+            }
+            .message-input-container {
+                padding: 12px 15px;
+                gap: 8px;
+            }
+            .send-button {
+                width: 42px;
+                height: 42px;
+                min-width: 42px;
+                font-size: 16px;
+            }
+            .input-actions {
+                gap: 12px;
+            }
+            .input-actions i {
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message-input-container {
+                padding: 10px 12px;
+            }
+            .send-button {
+                width: 40px;
+                height: 40px;
+                min-width: 40px;
             }
         }
     </style>
@@ -697,15 +738,15 @@
     <!-- Login Screen -->
     <div class="login-screen" id="loginScreen">
         <div class="login-container">
-            <h2 class="login-title">Mango Chat</h2>
-            <p style="color: var(--light-text); margin-bottom: 24px;">Select your user to start</p>
+            <h2 class="login-title">Mango Love</h2>
+            <p style="color: var(--light-text); margin-bottom: 24px;">Select your user to start loving</p>
             <div class="user-option" data-user="mango1">
                 <div class="user-name">Mango 1</div>
             </div>
             <div class="user-option" data-user="mango2">
                 <div class="user-name">Mango 2</div>
             </div>
-            <button class="login-button" id="loginButton">Start Chatting</button>
+            <button class="login-button" id="loginButton">Start Loving</button>
         </div>
     </div>
 
@@ -743,7 +784,7 @@
                     </div>
                     <div class="chat-details">
                         <div class="chat-name" id="contactName">Mango 2</div>
-                        <div class="chat-preview" id="chatPreview">Click to start chatting</div>
+                        <div class="chat-preview" id="chatPreview">Start loving...</div>
                     </div>
                     <div class="chat-meta">
                         <div class="chat-time">Now</div>
@@ -774,7 +815,7 @@
             
             <div class="messages-container" id="messagesContainer">
                 <div class="message message-system">
-                    Welcome to Mango Chat! Select your user to start chatting.
+                    Welcome to Mango Love! Start loving...
                 </div>
             </div>
             
@@ -860,6 +901,7 @@
         let peerConnection;
         let isCallActive = false;
         let currentCallType = '';
+        let messages = []; // Store messages locally for persistence
 
         // DOM Elements
         const loginScreen = document.getElementById('loginScreen');
@@ -881,10 +923,46 @@
         const userProfilePic = document.getElementById('userProfilePic');
         const fileInput = document.getElementById('fileInput');
 
+        // Load profile pictures from localStorage
+        function loadProfilePictures() {
+            const savedProfilePic = localStorage.getItem('profilePic');
+            const savedContactPic = localStorage.getItem('contactPic');
+            
+            if (savedProfilePic) {
+                updateProfilePicture(savedProfilePic);
+            }
+            if (savedContactPic) {
+                updateContactPicture(savedContactPic);
+            }
+        }
+
+        // Update profile picture
+        function updateProfilePicture(imageData) {
+            const profilePics = document.querySelectorAll('.profile-pic, .userProfilePic');
+            profilePics.forEach(pic => {
+                const img = document.createElement('img');
+                img.src = imageData;
+                pic.innerHTML = '';
+                pic.appendChild(img);
+            });
+            localStorage.setItem('profilePic', imageData);
+        }
+
+        // Update contact picture
+        function updateContactPicture(imageData) {
+            const contactPics = document.querySelectorAll('.chat-avatar, .chat-header-avatar, .caller-avatar');
+            contactPics.forEach(pic => {
+                const img = document.createElement('img');
+                img.src = imageData;
+                pic.innerHTML = '';
+                pic.appendChild(img);
+            });
+            localStorage.setItem('contactPic', imageData);
+        }
+
         // Initialize WebRTC
         async function initializeWebRTC() {
             try {
-                // Test media access
                 await navigator.mediaDevices.getUserMedia({ audio: true });
                 console.log('WebRTC initialized');
             } catch (error) {
@@ -896,21 +974,18 @@
         function createPeerConnection() {
             peerConnection = new RTCPeerConnection(configuration);
             
-            // Add local stream
             if (localStream) {
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
             }
             
-            // Handle remote stream
             peerConnection.ontrack = (event) => {
                 console.log('Received remote stream');
                 remoteStream = event.streams[0];
                 remoteVideo.srcObject = remoteStream;
             };
             
-            // Handle ICE candidates
             peerConnection.onicecandidate = (event) => {
                 if (event.candidate) {
                     socket.emit('ice-candidate', {
@@ -935,7 +1010,6 @@
                 document.getElementById('connectionStatus').style.background = 'rgba(0,0,0,0.8)';
             });
             
-            // User status
             socket.on('user-online', (userData) => {
                 if (userData.username === otherUser) {
                     updateUserStatus(true);
@@ -948,7 +1022,6 @@
                 }
             });
             
-            // Incoming call
             socket.on('incoming-call', async (data) => {
                 console.log('Incoming call:', data);
                 showIncomingCall(data);
@@ -974,10 +1047,10 @@
                 }
             });
             
-            // Messages
             socket.on('new-message', (messageData) => {
                 if (messageData.sender === otherUser) {
                     addMessage('received', messageData.text, new Date(messageData.timestamp));
+                    messages.push(messageData);
                 }
             });
         }
@@ -992,10 +1065,8 @@
                 videoContainer.style.display = 'block';
             }
             
-            // Create peer connection for incoming call
             createPeerConnection();
             
-            // Set remote description
             if (data.offer) {
                 peerConnection.setRemoteDescription(data.offer);
             }
@@ -1024,7 +1095,6 @@
             currentCallType = callType;
             
             try {
-                // Get media stream
                 const constraints = {
                     audio: true,
                     video: callType === 'video'
@@ -1064,7 +1134,6 @@
         // Accept call
         async function acceptIncomingCall() {
             try {
-                // Get media stream
                 const constraints = {
                     audio: true,
                     video: currentCallType === 'video'
@@ -1146,10 +1215,11 @@
             
             socket.emit('send-message', messageData);
             addMessage('sent', text, new Date());
+            messages.push(messageData);
             messageInput.value = '';
         }
 
-        // Add message
+        // Add message (permanent until deleted)
         function addMessage(type, text, timestamp) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message message-${type}`;
@@ -1159,11 +1229,21 @@
             messageDiv.innerHTML = `
                 <div>${text}</div>
                 <div class="message-time">${timeString}</div>
-                ${type === 'sent' ? '<div class="message-actions"><i class="fas fa-trash"></i></div>' : ''}
+                ${type === 'sent' ? '<div class="message-actions"><i class="fas fa-trash" onclick="deleteMessage(this)"></i></div>' : ''}
             `;
             
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Delete message
+        function deleteMessage(deleteIcon) {
+            const messageDiv = deleteIcon.closest('.message');
+            messageDiv.style.opacity = '0.5';
+            messageDiv.style.textDecoration = 'line-through';
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 1000);
         }
 
         // Change profile picture
@@ -1173,14 +1253,7 @@
                 if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
-                        // Update all profile pictures
-                        const profilePics = document.querySelectorAll('.profile-pic, .chat-avatar, .chat-header-avatar, .caller-avatar');
-                        profilePics.forEach(pic => {
-                            const img = document.createElement('img');
-                            img.src = event.target.result;
-                            pic.innerHTML = '';
-                            pic.appendChild(img);
-                        });
+                        updateProfilePicture(event.target.result);
                     };
                     reader.readAsDataURL(file);
                 }
@@ -1212,7 +1285,7 @@
                 userId: socket.id
             });
             
-            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! Start chatting.`, new Date());
+            addMessage('system', `Connected with ${otherUser === 'mango1' ? 'Mango 1' : 'Mango 2'}! Start loving.`, new Date());
         }
 
         // Event listeners
@@ -1241,6 +1314,7 @@
 
         // Initialize app
         async function initApp() {
+            loadProfilePictures();
             initializeSocket();
             await initializeWebRTC();
         }
