@@ -1,7 +1,7 @@
 {
   "name": "mango-chat",
   "version": "1.0.0",
-  "description": "Private chat app for two users with WebRTC calls",
+  "description": "Private chat app for two users",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
