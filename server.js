@@ -5,146 +5,103 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+const io = socketIo(server);
 
 // Serve static files
 app.use(express.static(__dirname));
 
 // Root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Store active users and their socket IDs
+// Store active users
 const users = new Map();
-const userSockets = new Map();
-
-// Store messages with deduplication
-let messages = [];
-const processedMessages = new Set();
 
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+    console.log('User connected:', socket.id);
 
-  // User login
-  socket.on('user-login', (userData) => {
-    users.set(userData.username, { ...userData, socketId: socket.id, online: true });
-    userSockets.set(socket.id, userData.username);
-    
-    console.log(`User ${userData.username} logged in`);
-    
-    // Notify all users about online status
-    const onlineUsers = Array.from(users.values()).filter(user => user.online);
-    io.emit('online-users', onlineUsers);
-    
-    // Send current online users to the new user
-    socket.emit('online-users', onlineUsers);
-  });
-
-  // WebRTC Signaling - FIXED with proper error handling
-  socket.on('call-user', (data) => {
-    const targetUser = users.get(data.target);
-    if (targetUser && targetUser.online) {
-      socket.to(targetUser.socketId).emit('incoming-call', {
-        from: data.from,
-        offer: data.offer,
-        callType: data.callType
-      });
-      console.log(`Call from ${data.from} to ${data.target}`);
-    } else {
-      socket.emit('call-rejected', { reason: 'User is offline' });
-    }
-  });
-
-  socket.on('accept-call', (data) => {
-    const callerUser = users.get(data.from);
-    if (callerUser && callerUser.online) {
-      socket.to(callerUser.socketId).emit('call-accepted', {
-        answer: data.answer
-      });
-    }
-  });
-
-  socket.on('reject-call', (data) => {
-    const callerUser = users.get(data.from);
-    if (callerUser && callerUser.online) {
-      socket.to(callerUser.socketId).emit('call-rejected', {
-        reason: data.reason
-      });
-    }
-  });
-
-  socket.on('ice-candidate', (data) => {
-    const targetUser = users.get(data.target);
-    if (targetUser && targetUser.online) {
-      socket.to(targetUser.socketId).emit('ice-candidate', data.candidate);
-    }
-  });
-
-  socket.on('end-call', (data) => {
-    const targetUser = users.get(data.target);
-    if (targetUser && targetUser.online) {
-      socket.to(targetUser.socketId).emit('call-ended', { from: data.from });
-    }
-  });
-
-  // Message handling with deduplication
-  socket.on('send-message', (messageData) => {
-    // Prevent duplicate messages
-    const messageKey = `${messageData.id}_${messageData.timestamp}`;
-    if (processedMessages.has(messageKey)) {
-      return; // Skip if already processed
-    }
-    
-    processedMessages.add(messageKey);
-    
-    // Store message
-    messages.push(messageData);
-    
-    // Keep only last 100 messages to prevent memory issues
-    if (messages.length > 100) {
-      messages = messages.slice(-50);
-    }
-    
-    // Broadcast to both users - only once
-    io.emit('new-message', messageData);
-    console.log(`Message sent from ${messageData.sender}: ${messageData.text}`);
-  });
-
-  socket.on('delete-message', (data) => {
-    messages = messages.filter(msg => msg.id !== data.messageId);
-    io.emit('message-deleted', { messageId: data.messageId });
-  });
-
-  // Get message history
-  socket.on('get-messages', () => {
-    socket.emit('message-history', messages);
-  });
-
-  socket.on('disconnect', () => {
-    const username = userSockets.get(socket.id);
-    if (username) {
-      const user = users.get(username);
-      if (user) {
-        user.online = false;
-        console.log(`User ${username} disconnected`);
+    // User login
+    socket.on('user-login', (userData) => {
+        users.set(userData.username, { 
+            ...userData, 
+            socketId: socket.id, 
+            online: true 
+        });
         
-        // Notify all users about offline status
+        console.log(`User ${userData.username} logged in`);
+        
+        // Notify other user about online status
+        socket.broadcast.emit('user-online', userData);
+        
+        // Send current online users to the new user
         const onlineUsers = Array.from(users.values()).filter(user => user.online);
-        io.emit('online-users', onlineUsers);
-      }
-      userSockets.delete(socket.id);
-    }
-  });
+        socket.emit('online-users', onlineUsers);
+    });
+
+    // WebRTC Signaling
+    socket.on('call-user', (data) => {
+        const targetUser = users.get(data.target);
+        if (targetUser && targetUser.online) {
+            socket.to(targetUser.socketId).emit('incoming-call', {
+                from: data.from,
+                offer: data.offer,
+                callType: data.callType
+            });
+            console.log(`Call from ${data.from} to ${data.target}`);
+        }
+    });
+
+    socket.on('accept-call', (data) => {
+        const callerUser = users.get(data.from);
+        if (callerUser && callerUser.online) {
+            socket.to(callerUser.socketId).emit('call-accepted', {
+                answer: data.answer
+            });
+        }
+    });
+
+    socket.on('reject-call', (data) => {
+        const callerUser = users.get(data.from);
+        if (callerUser && callerUser.online) {
+            socket.to(callerUser.socketId).emit('call-rejected');
+        }
+    });
+
+    socket.on('end-call', (data) => {
+        const targetUser = users.get(data.target);
+        if (targetUser && targetUser.online) {
+            socket.to(targetUser.socketId).emit('call-ended');
+        }
+    });
+
+    socket.on('ice-candidate', (data) => {
+        const targetUser = users.get(data.target);
+        if (targetUser && targetUser.online) {
+            socket.to(targetUser.socketId).emit('ice-candidate', data.candidate);
+        }
+    });
+
+    // Message handling
+    socket.on('send-message', (messageData) => {
+        // Broadcast to both users
+        io.emit('new-message', messageData);
+    });
+
+    socket.on('disconnect', () => {
+        // Find and mark user as offline
+        for (let [username, user] of users.entries()) {
+            if (user.socketId === socket.id) {
+                user.online = false;
+                console.log(`User ${username} disconnected`);
+                socket.broadcast.emit('user-offline', user);
+                break;
+            }
+        }
+    });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Mango Chat Server running on port ${PORT}`);
-  console.log(`👉 Access your app: http://localhost:${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
