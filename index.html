@@ -607,6 +607,51 @@
             color: white;
         }
 
+        /* Video Container - FIXED for proper video call layout */
+        .video-container {
+            width: 100%;
+            height: 70vh;
+            margin: 20px auto;
+            position: relative;
+            display: none;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #000;
+        }
+
+        .local-video {
+            position: absolute;
+            width: 200px;
+            height: 150px;
+            bottom: 20px;
+            right: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            background: #000;
+            object-fit: cover;
+            z-index: 10;
+        }
+
+        .call-quality {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
         /* Connection Status */
         .connection-status {
             position: fixed;
@@ -630,45 +675,6 @@
 
         .connection-status.disconnected {
             background: rgba(255, 107, 107, 0.9);
-        }
-
-        /* Video Elements */
-        .video-container {
-            width: 100%;
-            max-width: 600px;
-            margin: 30px auto;
-            position: relative;
-            display: none;
-        }
-
-        .video-container video {
-            width: 100%;
-            border-radius: 12px;
-            background: #000;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .local-video {
-            position: absolute;
-            width: 140px;
-            height: 105px;
-            bottom: 15px;
-            right: 15px;
-            border: 3px solid rgba(255, 255, 255, 0.8);
-            border-radius: 8px;
-            background: #000;
-        }
-
-        .call-quality {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 13px;
-            backdrop-filter: blur(10px);
         }
 
         /* Login Screen */
@@ -868,6 +874,11 @@
                 width: 60px;
                 height: 60px;
             }
+            
+            .local-video {
+                width: 120px;
+                height: 90px;
+            }
         }
     </style>
 </head>
@@ -986,9 +997,9 @@
             <div class="caller-name" id="callerName">Mango 2</div>
             <div class="call-status" id="callStatus">Calling...</div>
             
-            <!-- Video containers for video calls -->
+            <!-- Video containers for video calls - FIXED LAYOUT -->
             <div class="video-container" id="videoContainer">
-                <video id="remoteVideo" autoplay playsinline></video>
+                <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
                 <video id="localVideo" class="local-video" autoplay playsinline muted></video>
                 <div class="call-quality" id="callQuality">Connecting...</div>
             </div>
@@ -1055,6 +1066,7 @@
         let isInitiator = false;
         let currentCallType = '';
         let messageCounter = 0;
+        let callEnded = false; // Prevent call loop
 
         // DOM Elements
         const connectionStatus = document.getElementById('connectionStatus');
@@ -1087,38 +1099,51 @@
 
         // Generate unique message ID
         function generateMessageId() {
-            return 'msg_' + Date.now() + '_' + (messageCounter++);
+            return 'msg_' + Date.now() + '_' + (messageCounter++) + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         // Initialize WebRTC with better error handling
         async function initializeWebRTC() {
             try {
-                // Request camera and microphone permissions
-                localStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 1280, height: 720 },
+                console.log('Initializing media devices...');
+                // We'll request media when call starts to avoid permission popup on load
+            } catch (error) {
+                console.warn('Error initializing WebRTC:', error);
+            }
+        }
+
+        // Get media stream for call
+        async function getMediaStream(callType) {
+            try {
+                const constraints = {
                     audio: {
                         echoCancellation: true,
                         noiseSuppression: true,
                         autoGainControl: true
-                    }
-                });
-                localVideo.srcObject = localStream;
-                console.log('Media devices accessed successfully');
-            } catch (error) {
-                console.warn('Error accessing media devices:', error);
-                // Fallback to audio only
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        }
-                    });
-                    console.log('Audio only access successful');
-                } catch (audioError) {
-                    console.error('Cannot access any media devices:', audioError);
+                    },
+                    video: callType === 'video' ? {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        frameRate: { ideal: 30 }
+                    } : false
+                };
+
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                if (callType === 'video') {
+                    localVideo.srcObject = localStream;
                 }
+                
+                console.log('Media stream obtained successfully for:', callType);
+                return true;
+            } catch (error) {
+                console.error('Error getting media stream:', error);
+                if (callType === 'video') {
+                    alert('Camera access is required for video calls. Please allow camera permissions.');
+                } else {
+                    alert('Microphone access is required for voice calls. Please allow microphone permissions.');
+                }
+                return false;
             }
         }
 
@@ -1134,17 +1159,23 @@
                     });
                 }
                 
-                // Handle incoming stream
+                // Handle incoming stream - FIXED for video
                 peerConnection.ontrack = (event) => {
-                    console.log('Received remote stream');
+                    console.log('Received remote stream with tracks:', event.streams[0].getTracks().length);
                     remoteStream = event.streams[0];
                     remoteVideo.srcObject = remoteStream;
+                    
+                    // Ensure video plays
+                    remoteVideo.onloadedmetadata = () => {
+                        remoteVideo.play().catch(e => console.log('Video play error:', e));
+                    };
+                    
                     updateCallQuality('Connected');
                 };
                 
                 // Handle ICE candidates
                 peerConnection.onicecandidate = (event) => {
-                    if (event.candidate) {
+                    if (event.candidate && socket && socket.connected) {
                         socket.emit('ice-candidate', {
                             target: otherUser,
                             candidate: event.candidate
@@ -1161,13 +1192,10 @@
                         console.log('WebRTC connection established successfully');
                     } else if (peerConnection.connectionState === 'failed') {
                         console.error('WebRTC connection failed');
-                        endCallHandler('Connection failed');
+                        if (!callEnded) {
+                            endCallHandler('Connection failed');
+                        }
                     }
-                };
-                
-                // ICE connection state
-                peerConnection.oniceconnectionstatechange = () => {
-                    console.log('ICE connection state:', peerConnection.iceConnectionState);
                 };
                 
             } catch (error) {
@@ -1203,7 +1231,9 @@
                 console.log('Connected to signaling server');
                 
                 // Request message history
-                socket.emit('get-messages');
+                if (currentUser) {
+                    socket.emit('get-messages');
+                }
             });
             
             socket.on('disconnect', () => {
@@ -1219,30 +1249,37 @@
             
             // Incoming call - FIXED
             socket.on('incoming-call', async (data) => {
-                console.log('Incoming call received:', data);
-                showIncomingCall(data);
+                console.log('Incoming call received from:', data.from);
+                if (!isCallActive) {
+                    showIncomingCall(data);
+                }
             });
             
             socket.on('call-accepted', async (data) => {
                 console.log('Call accepted by peer');
-                if (peerConnection) {
+                if (peerConnection && data.answer) {
                     await peerConnection.setRemoteDescription(data.answer);
+                    startCall();
                 }
-                startCall();
             });
             
             socket.on('call-rejected', (data) => {
                 console.log('Call rejected:', data.reason);
-                endCallHandler('Call rejected');
+                if (!callEnded) {
+                    endCallHandler('Call rejected');
+                }
             });
             
-            socket.on('call-ended', () => {
+            socket.on('call-ended', (data) => {
                 console.log('Call ended by other user');
-                endCallHandler('Call ended by peer');
+                if (!callEnded) {
+                    callEnded = true;
+                    endCallHandler('Call ended by peer');
+                }
             });
             
             socket.on('ice-candidate', async (candidate) => {
-                if (peerConnection) {
+                if (peerConnection && candidate) {
                     try {
                         await peerConnection.addIceCandidate(candidate);
                     } catch (error) {
@@ -1251,17 +1288,21 @@
                 }
             });
             
-            // Messaging
+            // Messaging - FIXED duplicate prevention
             socket.on('new-message', (messageData) => {
-                if (messageData.sender === otherUser || messageData.sender === currentUser) {
-                    addMessage(messageData.type || 'received', messageData.text, new Date(messageData.timestamp), messageData.id, messageData.fileInfo);
+                // Only add message if it's from other user or it's our own message that we haven't displayed
+                if (messageData.sender === otherUser || (messageData.sender === currentUser && !document.querySelector(`[data-id="${messageData.id}"]`))) {
+                    const messageType = messageData.sender === currentUser ? 'sent' : 'received';
+                    addMessage(messageType, messageData.text, new Date(messageData.timestamp), messageData.id, messageData.fileInfo);
                 }
             });
             
             socket.on('message-history', (messages) => {
                 messages.forEach(messageData => {
                     const messageType = messageData.sender === currentUser ? 'sent' : 'received';
-                    addMessage(messageType, messageData.text, new Date(messageData.timestamp), messageData.id, messageData.fileInfo);
+                    if (!document.querySelector(`[data-id="${messageData.id}"]`)) {
+                        addMessage(messageType, messageData.text, new Date(messageData.timestamp), messageData.id, messageData.fileInfo);
+                    }
                 });
             });
             
@@ -1281,25 +1322,12 @@
             if (currentCallType === 'video') {
                 videoContainer.style.display = 'block';
             }
-            
-            // Create peer connection for incoming call
-            createPeerConnection();
-            
-            // Set remote description
-            if (peerConnection && data.offer) {
-                peerConnection.setRemoteDescription(data.offer)
-                    .then(() => {
-                        console.log('Remote description set for incoming call');
-                    })
-                    .catch(error => {
-                        console.error('Error setting remote description:', error);
-                    });
-            }
         }
 
         // Start a call
         function startCall() {
             isCallActive = true;
+            callEnded = false;
             callStatus.textContent = `${currentCallType.charAt(0).toUpperCase() + currentCallType.slice(1)} call connected`;
             
             if (isInitiator) {
@@ -1314,20 +1342,24 @@
                     localVideo.srcObject = localStream;
                 }
             }
-            
-            // Add call started message
-            addMessage('system', `${currentCallType} call started`, new Date());
         }
 
-        // Initiate a call - FIXED
+        // Initiate a call - FIXED with proper media handling
         async function initiateCall(callType) {
             if (!socket || !socket.connected) {
                 alert('Not connected to server. Please refresh and try again.');
                 return;
             }
             
+            // Get media permissions first
+            const mediaSuccess = await getMediaStream(callType);
+            if (!mediaSuccess) {
+                return;
+            }
+            
             currentCallType = callType;
             isInitiator = true;
+            callEnded = false;
             
             callStatus.textContent = 'Calling...';
             callScreen.style.display = 'flex';
@@ -1345,7 +1377,7 @@
                 });
                 await peerConnection.setLocalDescription(offer);
                 
-                // Send call request - FIXED
+                // Send call request
                 socket.emit('call-user', {
                     target: otherUser,
                     from: currentUser,
@@ -1357,7 +1389,7 @@
                 
                 // Set timeout for no answer
                 setTimeout(() => {
-                    if (!isCallActive) {
+                    if (!isCallActive && !callEnded) {
                         endCallHandler('No answer');
                     }
                 }, 30000);
@@ -1368,17 +1400,30 @@
             }
         }
 
-        // Accept incoming call - FIXED
+        // Accept incoming call - FIXED with media handling
         async function acceptIncomingCall() {
             try {
-                if (!peerConnection) {
-                    createPeerConnection();
+                // Get media permissions first
+                const mediaSuccess = await getMediaStream(currentCallType);
+                if (!mediaSuccess) {
+                    socket.emit('reject-call', {
+                        from: otherUser,
+                        reason: 'Media access denied'
+                    });
+                    endCallHandler('Media access denied');
+                    return;
+                }
+                
+                createPeerConnection();
+                
+                if (peerConnection.currentRemoteDescription) {
+                    console.log('Remote description already set');
                 }
                 
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
                 
-                // Send acceptance - FIXED
+                // Send acceptance
                 socket.emit('accept-call', {
                     from: otherUser,
                     answer: answer
@@ -1391,7 +1436,7 @@
             }
         }
 
-        // Reject incoming call - FIXED
+        // Reject incoming call
         function rejectIncomingCall() {
             socket.emit('reject-call', {
                 from: otherUser,
@@ -1400,15 +1445,21 @@
             endCallHandler('Call rejected');
         }
 
-        // End call handler
+        // End call handler - FIXED loop prevention
         function endCallHandler(reason) {
+            if (callEnded) return;
+            
+            callEnded = true;
             isCallActive = false;
             callScreen.style.display = 'none';
             videoContainer.style.display = 'none';
             
             // Stop all tracks
             if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
+                localStream.getTracks().forEach(track => {
+                    track.stop();
+                });
+                localStream = null;
             }
             
             if (peerConnection) {
@@ -1416,18 +1467,17 @@
                 peerConnection = null;
             }
             
-            // Notify other user
-            if (socket && socket.connected) {
-                socket.emit('end-call', { target: otherUser });
+            // Notify other user only if we're the one ending the call
+            if (socket && socket.connected && reason !== 'Call ended by peer') {
+                socket.emit('end-call', { target: otherUser, from: currentUser });
             }
             
-            // Add call log to chat
-            if (reason && reason !== 'Call rejected' && reason !== 'No answer') {
+            // Add call log to chat only once
+            if (reason && reason !== 'Call rejected' && reason !== 'No answer' && !reason.includes('by peer')) {
                 addMessage('system', `${currentCallType} call ${reason}`, new Date());
             }
             
-            // Reinitialize media for next call
-            setTimeout(initializeWebRTC, 1000);
+            console.log('Call ended:', reason);
         }
 
         // Update user status
@@ -1447,13 +1497,14 @@
             videoCallBtn.style.cursor = isOnline ? 'pointer' : 'not-allowed';
         }
 
-        // Send message
+        // Send message - FIXED duplicate prevention
         function sendMessage() {
             const text = document.getElementById('messageInput').value.trim();
             if (text === '') return;
             
+            const messageId = generateMessageId();
             const messageData = {
-                id: generateMessageId(),
+                id: messageId,
                 text: text,
                 sender: currentUser,
                 timestamp: new Date().getTime(),
@@ -1461,17 +1512,25 @@
                 type: 'sent'
             };
             
-            socket.emit('send-message', messageData);
-            addMessage('sent', text, new Date(), messageData.id);
+            // Add to UI immediately
+            addMessage('sent', text, new Date(), messageId);
             document.getElementById('messageInput').value = '';
+            
+            // Send to server
+            socket.emit('send-message', messageData);
         }
 
         // Add message to UI with delete functionality
         function addMessage(type, text, timestamp, messageId, fileInfo = null) {
+            // Check if message already exists to prevent duplicates
+            if (document.querySelector(`[data-id="${messageId}"]`)) {
+                return;
+            }
+            
             const messagesContainer = document.getElementById('messagesContainer');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message message-${type}`;
-            messageDiv.dataset.id = messageId || generateMessageId();
+            messageDiv.dataset.id = messageId;
             
             const timeString = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
@@ -1534,53 +1593,44 @@
             else return (bytes / 1048576).toFixed(1) + ' MB';
         }
 
-        // Handle file upload
+        // Handle file upload - FIXED to not send automatically
         function handleFileUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
             
             fileModal.style.display = 'none';
             
-            const fileInfo = {
+            // Just show in input field, don't send automatically
+            document.getElementById('messageInput').value = `File: ${file.name}`;
+            document.getElementById('messageInput').focus();
+            
+            // Store file info for when user actually sends the message
+            window.currentFile = {
                 name: file.name,
                 size: file.size,
                 type: file.type
             };
             
-            const messageData = {
-                id: generateMessageId(),
-                text: `Sent a file: ${file.name}`,
-                sender: currentUser,
-                timestamp: new Date().getTime(),
-                receiver: otherUser,
-                type: 'sent',
-                fileInfo: fileInfo
-            };
-            
-            socket.emit('send-message', messageData);
-            addMessage('sent', `Sent a file: ${file.name}`, new Date(), messageData.id, fileInfo);
-            
             // Reset file input
             fileInput.value = '';
         }
 
-        // Change profile picture
+        // Change profile picture - FIXED to not send as message
         function changeProfilePicture() {
             fileInput.setAttribute('accept', 'image/*');
-            fileInput.click();
-            
             fileInput.onchange = function(e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = function(event) {
+                        // Update all profile images
                         document.getElementById('profileImage').src = event.target.result;
-                        // In production, you would upload this to a server
-                        console.log('Profile picture changed');
+                        console.log('Profile picture changed locally');
                     };
                     reader.readAsDataURL(file);
                 }
             };
+            fileInput.click();
         }
 
         // User login
@@ -1633,9 +1683,62 @@
             });
         });
 
-        document.getElementById('sendButton').addEventListener('click', sendMessage);
+        document.getElementById('sendButton').addEventListener('click', function() {
+            const text = document.getElementById('messageInput').value.trim();
+            if (text === '') return;
+            
+            const messageId = generateMessageId();
+            const messageData = {
+                id: messageId,
+                text: text,
+                sender: currentUser,
+                timestamp: new Date().getTime(),
+                receiver: otherUser,
+                type: 'sent'
+            };
+            
+            // Check if there's a file to send
+            if (window.currentFile && text.startsWith('File:')) {
+                messageData.fileInfo = window.currentFile;
+                delete window.currentFile;
+            }
+            
+            // Add to UI immediately
+            addMessage('sent', text, new Date(), messageId, messageData.fileInfo);
+            document.getElementById('messageInput').value = '';
+            
+            // Send to server
+            socket.emit('send-message', messageData);
+        });
+
         document.getElementById('messageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter') {
+                const text = document.getElementById('messageInput').value.trim();
+                if (text === '') return;
+                
+                const messageId = generateMessageId();
+                const messageData = {
+                    id: messageId,
+                    text: text,
+                    sender: currentUser,
+                    timestamp: new Date().getTime(),
+                    receiver: otherUser,
+                    type: 'sent'
+                };
+                
+                // Check if there's a file to send
+                if (window.currentFile && text.startsWith('File:')) {
+                    messageData.fileInfo = window.currentFile;
+                    delete window.currentFile;
+                }
+                
+                // Add to UI immediately
+                addMessage('sent', text, new Date(), messageId, messageData.fileInfo);
+                document.getElementById('messageInput').value = '';
+                
+                // Send to server
+                socket.emit('send-message', messageData);
+            }
         });
 
         voiceCallBtn.addEventListener('click', () => {
@@ -1660,23 +1763,24 @@
         
         documentOption.addEventListener('click', () => {
             fileInput.setAttribute('accept', '.pdf,.doc,.docx,.txt,.zip,.rar');
+            fileInput.onchange = handleFileUpload;
             fileInput.click();
         });
         
         galleryOption.addEventListener('click', () => {
             fileInput.setAttribute('accept', 'image/*,video/*');
+            fileInput.onchange = handleFileUpload;
             fileInput.click();
         });
         
         cameraOption.addEventListener('click', () => {
             fileInput.setAttribute('accept', 'image/*');
             fileInput.setAttribute('capture', 'camera');
+            fileInput.onchange = handleFileUpload;
             fileInput.click();
         });
-        
-        fileInput.addEventListener('change', handleFileUpload);
 
-        // Profile picture change
+        // Profile picture change - FIXED
         userProfilePic.addEventListener('click', changeProfilePicture);
 
         // Initialize app
