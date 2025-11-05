@@ -89,20 +89,20 @@
                         font-size:13px;padding:8px 16px;border-radius:12px;}
         .message-time{font-size:11px;opacity:.8;margin-top:4px;text-align:right;}
 
-        /* INPUT BAR - FIXED VISIBILITY */
+        /* INPUT BAR - NOW FULLY VISIBLE */
         .message-input-container{
-            padding:15px 20px;background:var(--sidebar);
-            display:flex;align-items:center;gap:12px;
+            padding:12px 16px;background:var(--sidebar);
+            display:flex;align-items:center;gap:10px;
             border-top:1px solid var(--border);position:relative;z-index:20;
         }
-        .input-actions{display:flex;gap:15px;}
-        .input-actions i{cursor:pointer;font-size:22px;color:var(--primary);}
-        .message-input{flex:1;border:none;border-radius:20px;padding:12px 20px;
+        .input-actions{display:flex;gap:12px;}
+        .input-actions i{cursor:pointer;font-size:20px;color:var(--primary);}
+        .message-input{flex:1;border:none;border-radius:20px;padding:10px 16px;
                        outline:none;font-size:15px;background:#fff;}
         .send-button{background:var(--primary);color:#fff;border:none;
-                     width:45px;height:45px;border-radius:50%;cursor:pointer;
+                     width:42px;height:42px;border-radius:50%;cursor:pointer;
                      display:flex;align-items:center;justify-content:center;
-                     font-size:18px;}
+                     font-size:18px;flex-shrink:0;}
         .send-button:hover{background:var(--primary-dark);}
 
         /* ---------- LOGIN SCREEN ---------- */
@@ -152,7 +152,7 @@
                            font-size:14px;z-index:1000;}
         .connection-status.connected{background:var(--secondary);}
 
-        /* ---------- CALL SCREEN (MOBILE + VIDEO) ---------- */
+        /* ---------- CALL SCREEN (ICONS ONLY) ---------- */
         .call-screen{
             position:fixed;top:0;left:0;right:0;bottom:0;
             background:#000;color:#fff;
@@ -198,7 +198,9 @@
             .container{flex-direction:column;height:100vh;border-radius:0;}
             .sidebar{width:100%;height:30%;min-width:auto;}
             .chat-area{width:100%;height:70%;}
-            .message-input-container{padding:12px 16px;}
+            .message-input-container{padding:10px 14px;}
+            .message-input{font-size:14px;padding:8px 14px;}
+            .send-button{width:38px;height:38px;font-size:16px;}
             .call-button{width:65px;height:65px;font-size:26px;}
             .caller-name{font-size:22px;}
             .call-status{font-size:16px;}
@@ -209,7 +211,7 @@
 <body>
 
     <div class="connection-status" id="connectionStatus">
-        Connected
+        <i class="fas fa-wifi"></i> Connecting...
     </div>
 
     <!-- LOGIN SCREEN -->
@@ -238,23 +240,22 @@
         <div class="sidebar">
             <div class="profile-header">
                 <div class="profile-pic" id="userProfilePic">
-                    <div class="default-avatar">User</div>
+                    <div class="default-avatar"><i class="fas fa-user"></i></div>
                 </div>
                 <div class="profile-info">
                     <div class="profile-name" id="userName">User</div>
                     <div class="profile-status" id="userStatus">Offline</div>
                 </div>
                 <div class="header-icons">
-                    <div class="icon">Status</div>
-                    <div class="icon">Chat</div>
-                    <div class="icon">More</div>
+                    <div class="icon"><i class="fas fa-circle-notch"></i></div>
+                    <div class="icon"><i class="fas fa-comment-alt"></i></div>
                 </div>
             </div>
 
             <div class="chat-list">
                 <div class="chat-item active">
                     <div class="chat-avatar">
-                        <div class="default-avatar">User</div>
+                        <div class="default-avatar"><i class="fas fa-user"></i></div>
                         <div class="online-indicator" id="onlineIndicator" style="display:none;"></div>
                     </div>
                     <div class="chat-details">
@@ -270,7 +271,7 @@
             <div class="chat-header">
                 <div class="chat-header-info">
                     <div class="chat-header-avatar">
-                        <div class="default-avatar">User</div>
+                        <div class="default-avatar"><i class="fas fa-user"></i></div>
                         <div class="online-indicator" id="chatOnlineIndicator" style="display:none;"></div>
                     </div>
                     <div>
@@ -279,9 +280,8 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
-                    <div class="icon" id="voiceCallBtn" title="Voice Call">Phone</div>
-                    <div class="icon" id="videoCallBtn" title="Video Call">Video</div>
-                    <div class="icon">More</div>
+                    <i class="fas fa-phone-alt icon" id="voiceCallBtn" title="Voice Call"></i>
+                    <i class="fas fa-video icon" id="videoCallBtn" title="Video Call"></i>
                 </div>
             </div>
 
@@ -291,23 +291,23 @@
                 </div>
             </div>
 
-            <!-- INPUT BAR - NOW VISIBLE -->
+            <!-- INPUT BAR - FULLY VISIBLE -->
             <div class="message-input-container">
                 <div class="input-actions">
-                    <div class="icon">Smile</div>
-                    <div class="icon" id="attachButton">Attach</div>
+                    <i class="fas fa-smile"></i>
+                    <i class="fas fa-paperclip" id="attachButton"></i>
                 </div>
                 <input type="text" class="message-input" placeholder="Type a message..." id="messageInput">
-                <button class="send-button" id="sendButton">Send</button>
+                <button class="send-button" id="sendButton"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
-    <!-- CALL SCREEN WITH LOCAL + REMOTE VIDEO -->
+    <!-- CALL SCREEN - ICONS ONLY -->
     <div class="call-screen" id="callScreen">
         <div class="caller-info">
             <div class="caller-avatar">
-                <div class="default-avatar">User</div>
+                <div class="default-avatar"><i class="fas fa-user"></i></div>
             </div>
             <div class="caller-name" id="callerName">Your Love</div>
             <div class="call-status" id="callStatus">Calling...</div>
@@ -319,10 +319,10 @@
         </div>
 
         <div class="call-controls">
-            <div class="call-button accept-call" id="acceptCall">Accept</div>
-            <div class="call-button reject-call" id="rejectCall">Reject</div>
+            <div class="call-button accept-call" id="acceptCall"><i class="fas fa-phone"></i></div>
+            <div class="call-button reject-call" id="rejectCall"><i class="fas fa-phone-slash"></i></div>
         </div>
-        <div class="call-button end-call" id="endCall">End</div>
+        <div class="call-button end-call" id="endCall"><i class="fas fa-phone-slash"></i></div>
     </div>
 
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
@@ -405,13 +405,13 @@
             socket = io();
 
             socket.on('connect', () => {
-                document.getElementById('connectionStatus').innerHTML = 'Connected';
+                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Connected';
                 document.getElementById('connectionStatus').classList.add('connected');
                 socket.emit('user-login', { username: currentUser });
             });
 
             socket.on('disconnect', () => {
-                document.getElementById('connectionStatus').innerHTML = 'Disconnected';
+                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Disconnected';
                 document.getElementById('connectionStatus').classList.remove('connected');
             });
 
