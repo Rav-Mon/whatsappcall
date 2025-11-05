@@ -9,20 +9,29 @@
     <style>
         * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Helvetica,Arial,sans-serif;}
         :root{
-            --primary:#0084FF;--primary-dark:#0066CC;--secondary:#00D4AA;
-            --sidebar:#F0F2F5;--sent:#0084FF;--received:#FFF;--text:#303030;
-            --light:#667781;--border:#e0e0e0;--online:#00D4AA;
-            --card:#fff;--card-hover:#f5f9ff;--card-active:#e6f0ff;
+            --primary:#10B981;           /* Emerald Green */
+            --primary-dark:#059669;      /* Dark Emerald */
+            --secondary:#34D399;         /* Lime Green Accent */
+            --sidebar:#ECFDF5;           /* Soft Mint */
+            --sent:#10B981;              /* Sent messages */
+            --received:#FFFFFF;          /* Received */
+            --text:#1F2937;              /* Dark gray text */
+            --light:#6B7280;             /* Light text */
+            --border:#A7F3D0;            /* Light green border */
+            --online:#34D399;            /* Online dot */
+            --card:#FFFFFF;
+            --card-hover:#F0FDF4;
+            --card-active:#DCFCE7;
             --mango-gradient: linear-gradient(135deg, #FFD700, #FFA500);
         }
         body{
-            background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+            background:linear-gradient(135deg, var(--primary), var(--primary-dark));
             height:100vh;display:flex;justify-content:center;align-items:center;
             padding:10px;overflow:hidden;position:relative;
         }
         .container{
             width:100%;max-width:1400px;height:95vh;background:#fff;
-            border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,.2);
+            border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);
             display:flex;overflow:hidden;display:none;z-index:10;
         }
 
@@ -30,10 +39,10 @@
         .sidebar{width:30%;min-width:300px;background:var(--sidebar);
                  border-right:1px solid var(--border);display:flex;flex-direction:column;}
         .profile-header{background:var(--primary-dark);color:#fff;padding:15px;
-                        display:flex;align-items:center;gap:12px;}
+                        display:flex;align-items:center;gap:12px;border-radius:12px 12px 0 0;}
         .profile-pic{width:45px;height:45px;border-radius:50%;background:#ddd;
                      display:flex;align-items:center;justify-content:center;
-                     cursor:pointer;border:2px solid #fff;overflow:hidden;}
+                     cursor:pointer;border:3px solid #fff;overflow:hidden;}
         .profile-pic img{width:100%;height:100%;object-fit:cover;}
         .profile-pic .default-avatar{font-size:20px;color:#666;}
         .profile-info{flex:1;}
@@ -44,9 +53,9 @@
 
         .chat-list{flex:1;overflow-y:auto;padding:10px 0;}
         .chat-item{display:flex;padding:15px;border-bottom:1px solid var(--border);
-                   cursor:pointer;gap:12px;align-items:center;}
-        .chat-item:hover{background:rgba(0,0,0,.05);}
-        .chat-item.active{background:rgba(0,132,255,.1);}
+                   cursor:pointer;gap:12px;align-items:center;transition:.2s;}
+        .chat-item:hover{background:var(--card-hover);}
+        .chat-item.active{background:var(--card-active);border-left:4px solid var(--primary);}
         .chat-avatar{width:50px;height:50px;border-radius:50%;background:#ddd;
                      display:flex;align-items:center;justify-content:center;
                      position:relative;overflow:hidden;}
@@ -55,14 +64,14 @@
         .online-indicator{position:absolute;bottom:2px;right:2px;width:12px;height:12px;
                           background:var(--online);border-radius:50%;border:2px solid #fff;}
         .chat-details{flex:1;}
-        .chat-name{font-weight:600;margin-bottom:4px;font-size:15px;}
+        .chat-name{font-weight:600;margin-bottom:4px;font-size:15px;color:var(--text);}
         .chat-preview{font-size:13px;color:var(--light);white-space:nowrap;
                       overflow:hidden;text-overflow:ellipsis;}
         .chat-meta{text-align:right;}
         .chat-time{font-size:11px;color:var(--light);margin-bottom:4px;}
 
         /* ---------- CHAT AREA ---------- */
-        .chat-area{flex:1;display:flex;flex-direction:column;background:#e5ddd5;position:relative;}
+        .chat-area{flex:1;display:flex;flex-direction:column;background:#FAFDF9;}
         .chat-header{background:var(--sidebar);padding:15px 20px;
                      display:flex;align-items:center;justify-content:space-between;
                      border-bottom:1px solid var(--border);}
@@ -72,52 +81,88 @@
                             position:relative;overflow:hidden;}
         .chat-header-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
         .chat-header-avatar .default-avatar{font-size:18px;color:#666;}
-        .chat-header-name{font-weight:600;font-size:16px;}
+        .chat-header-name{font-weight:600;font-size:16px;color:var(--text);}
         .chat-header-status{font-size:13px;color:var(--light);}
         .chat-header-actions{display:flex;gap:20px;}
         .chat-header-actions i{cursor:pointer;font-size:20px;color:var(--primary);}
 
         .messages-container{flex:1;padding:20px;overflow-y:auto;
-                            display:flex;flex-direction:column;gap:8px;}
-        .message{max-width:70%;padding:10px 15px;border-radius:8px;position:relative;
-                 word-wrap:break-word;}
+                            display:flex;flex-direction:column;gap:10px;}
+        .message{max-width:70%;padding:11px 16px;border-radius:12px;position:relative;
+                 word-wrap:break-word;box-shadow:0 1px 2px rgba(0,0,0,.05);}
         .message-sent{align-self:flex-end;background:var(--sent);color:#fff;
                       border-bottom-right-radius:4px;}
         .message-received{align-self:flex-start;background:var(--received);color:var(--text);
-                          border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.1);}
-        .message-system{align-self:center;background:rgba(0,0,0,.1);color:var(--light);
+                          border-bottom-left-radius:4px;border:1px solid #E5E7EB;}
+        .message-system{align-self:center;background:var(--card-active);color:var(--text);
                         font-size:13px;padding:8px 16px;border-radius:12px;}
         .message-time{font-size:11px;opacity:.8;margin-top:4px;text-align:right;}
 
-        /* INPUT BAR - NOW FULLY VISIBLE */
+        /* ---------- INPUT BAR - FULLY VISIBLE & ICON SEND ---------- */
         .message-input-container{
-            padding:12px 16px;background:var(--sidebar);
-            display:flex;align-items:center;gap:10px;
-            border-top:1px solid var(--border);position:relative;z-index:20;
+            padding:12px 16px;
+            background:var(--sidebar);
+            display:flex;
+            align-items:center;
+            gap:10px;
+            border-top:1px solid var(--border);
+            min-height:62px;
+            z-index:20;
         }
-        .input-actions{display:flex;gap:12px;}
-        .input-actions i{cursor:pointer;font-size:20px;color:var(--primary);}
-        .message-input{flex:1;border:none;border-radius:20px;padding:10px 16px;
-                       outline:none;font-size:15px;background:#fff;}
-        .send-button{background:var(--primary);color:#fff;border:none;
-                     width:42px;height:42px;border-radius:50%;cursor:pointer;
-                     display:flex;align-items:center;justify-content:center;
-                     font-size:18px;flex-shrink:0;}
-        .send-button:hover{background:var(--primary-dark);}
+        .input-actions{
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+        .input-actions i{
+            cursor:pointer;
+            font-size:22px;
+            color:var(--primary);
+            transition:.2s;
+        }
+        .input-actions i:hover{transform:scale(1.1);}
+        .message-input{
+            flex:1;
+            border:none;
+            border-radius:24px;
+            padding:11px 18px;
+            outline:none;
+            font-size:15px;
+            background:#fff;
+            box-shadow:0 1px 3px rgba(0,0,0,.1);
+            min-height:44px;
+        }
+        .send-button{
+            background:var(--primary);
+            color:#fff;
+            border:none;
+            width:46px;
+            height:46px;
+            border-radius:50%;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:19px;
+            flex-shrink:0;
+            box-shadow:0 2px 6px rgba(16,185,129,.3);
+            transition:.2s;
+        }
+        .send-button:hover{background:var(--primary-dark);transform:scale(1.05);}
 
         /* ---------- LOGIN SCREEN ---------- */
         .login-screen{position:absolute;top:0;left:0;right:0;bottom:0;
                       background:linear-gradient(135deg,var(--primary),var(--primary-dark));
                       display:flex;justify-content:center;align-items:center;z-index:2000;}
-        .login-container{background:#fff;border-radius:15px;padding:40px;
-                         width:90%;max-width:400px;text-align:center;
-                         box-shadow:0 10px 30px rgba(0,0,0,.3);}
+        .login-container{background:#fff;border-radius:16px;padding:40px;
+                         width:90%;max-width:420px;text-align:center;
+                         box-shadow:0 15px 35px rgba(0,0,0,.2);}
         .login-title{
             background: var(--mango-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-size: 36px;
+            font-size: 38px;
             font-weight: 800;
             letter-spacing: 1px;
             margin-bottom: 16px;
@@ -126,33 +171,34 @@
 
         .user-selection{display:flex;flex-direction:column;gap:16px;margin-bottom:24px;}
         .user-card{background:var(--card);border:2px solid var(--border);
-                   border-radius:12px;padding:16px;display:flex;align-items:center;
-                   gap:14px;cursor:pointer;transition:all .2s ease;
-                   box-shadow:0 2px 8px rgba(0,0,0,.05);}
+                   border-radius:14px;padding:18px;display:flex;align-items:center;
+                   gap:16px;cursor:pointer;transition:all .25s ease;
+                   box-shadow:0 3px 10px rgba(0,0,0,.08);}
         .user-card:hover{border-color:var(--primary);background:var(--card-hover);
-                         transform:translateY(-2px);}
+                         transform:translateY(-3px);box-shadow:0 6px 16px rgba(16,185,129,.15);}
         .user-card.active{border-color:var(--primary);background:var(--card-active);
-                          font-weight:600;}
+                          font-weight:600;box-shadow:0 6px 16px rgba(16,185,129,.2);}
         .user-card .avatar{
-            width:50px;height:50px;border-radius:50%;
+            width:52px;height:52px;border-radius:50%;
             background: var(--mango-gradient);
             display:flex;align-items:center;justify-content:center;
-            font-size:20px;color:#fff;font-weight:bold;
+            font-size:21px;color:#fff;font-weight:bold;
         }
-        .user-card .name{font-size:17px;color:var(--text);}
+        .user-card .name{font-size:18px;color:var(--text);}
 
         .login-button{background:var(--primary);color:#fff;border:none;
-                      border-radius:25px;padding:14px 30px;font-size:16px;
-                      cursor:pointer;width:100%;font-weight:600;transition:.2s;}
-        .login-button:hover{background:var(--primary-dark);}
-        .login-button:disabled{background:#aaa;cursor:not-allowed;}
+                      border-radius:28px;padding:15px 32px;font-size:17px;
+                      cursor:pointer;width:100%;font-weight:600;transition:.25s;
+                      box-shadow:0 4px 12px rgba(16,185,129,.3);}
+        .login-button:hover{background:var(--primary-dark);transform:translateY(-1px);}
+        .login-button:disabled{background:#9CA3AF;cursor:not-allowed;transform:none;}
 
         .connection-status{position:fixed;top:15px;right:15px;background:rgba(0,0,0,.8);
-                           color:#fff;padding:8px 15px;border-radius:20px;
-                           font-size:14px;z-index:1000;}
-        .connection-status.connected{background:var(--secondary);}
+                           color:#fff;padding:8px 16px;border-radius:20px;
+                           font-size:14px;z-index:1000;display:flex;align-items:center;gap:6px;}
+        .connection-status.connected{background:var(--secondary);color:#fff;}
 
-        /* ---------- CALL SCREEN (ICONS ONLY) ---------- */
+        /* ---------- CALL SCREEN - ICONS ONLY ---------- */
         .call-screen{
             position:fixed;top:0;left:0;right:0;bottom:0;
             background:#000;color:#fff;
@@ -164,22 +210,23 @@
                      text-align:center;width:100%;}
         .caller-avatar{width:90px;height:90px;border-radius:50%;
                        background:#333;display:flex;align-items:center;
-                       justify-content:center;overflow:hidden;}
+                       justify-content:center;overflow:hidden;border:4px solid #fff;}
         .caller-avatar img{width:100%;height:100%;object-fit:cover;}
         .caller-name{font-size:24px;font-weight:600;}
         .call-status{font-size:18px;color:var(--secondary);}
 
         .video-container{
             width:100%;max-width:400px;height:50vh;
-            background:#000;border-radius:12px;overflow:hidden;
+            background:#000;border-radius:14px;overflow:hidden;
             margin:20px 0;position:relative;display:none;
+            box-shadow:0 8px 25px rgba(0,0,0,.4);
         }
         .remote-video{width:100%;height:100%;object-fit:cover;}
         .local-video{
             position:absolute;bottom:15px;right:15px;
-            width:100px;height:140px;border-radius:8px;
-            border:2px solid #fff;overflow:hidden;z-index:10;
-            object-fit:cover;
+            width:100px;height:140px;border-radius:10px;
+            border:3px solid #fff;overflow:hidden;z-index:10;
+            object-fit:cover;box-shadow:0 4px 12px rgba(0,0,0,.3);
         }
 
         .call-controls{
@@ -188,30 +235,32 @@
         .call-button{
             width:70px;height:70px;border-radius:50%;
             display:flex;align-items:center;justify-content:center;
-            font-size:28px;cursor:pointer;transition:0.2s;
+            font-size:28px;cursor:pointer;transition:0.25s;
+            box-shadow:0 6px 16px rgba(0,0,0,.3);
         }
         .accept-call{background:var(--secondary);color:#fff;}
-        .reject-call{background:#e74c3c;color:#fff;}
-        .end-call{background:#e74c3c;color:#fff;display:none;}
+        .reject-call{background:#EF4444;color:#fff;}
+        .end-call{background:#EF4444;color:#fff;display:none;}
 
         @media (max-width:768px){
             .container{flex-direction:column;height:100vh;border-radius:0;}
             .sidebar{width:100%;height:30%;min-width:auto;}
             .chat-area{width:100%;height:70%;}
-            .message-input-container{padding:10px 14px;}
-            .message-input{font-size:14px;padding:8px 14px;}
-            .send-button{width:38px;height:38px;font-size:16px;}
+            .message-input-container{padding:10px 14px;gap:8px;}
+            .message-input{font-size:14.5px;padding:9px 14px;}
+            .send-button{width:42px;height:42px;font-size:17px;}
+            .input-actions i{font-size:20px;}
             .call-button{width:65px;height:65px;font-size:26px;}
-            .caller-name{font-size:22px;}
-            .call-status{font-size:16px;}
             .local-video{width:80px;height:110px;bottom:10px;right:10px;}
+            .login-container{padding:30px;}
+            .login-title{font-size:34px;}
         }
     </style>
 </head>
 <body>
 
     <div class="connection-status" id="connectionStatus">
-        <i class="fas fa-wifi"></i> Connecting...
+        Connecting...
     </div>
 
     <!-- LOGIN SCREEN -->
@@ -291,14 +340,16 @@
                 </div>
             </div>
 
-            <!-- INPUT BAR - FULLY VISIBLE -->
+            <!-- INPUT BAR - ICON SEND BUTTON -->
             <div class="message-input-container">
                 <div class="input-actions">
                     <i class="fas fa-smile"></i>
                     <i class="fas fa-paperclip" id="attachButton"></i>
                 </div>
                 <input type="text" class="message-input" placeholder="Type a message..." id="messageInput">
-                <button class="send-button" id="sendButton"><i class="fas fa-paper-plane"></i></button>
+                <button class="send-button" id="sendButton">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -342,6 +393,7 @@
         const messagesContainer = document.getElementById('messagesContainer');
         const voiceCallBtn  = document.getElementById('voiceCallBtn');
         const videoCallBtn  = document.getElementById('videoCallBtn');
+        const attachButton  = document.getElementById('attachButton');
         const callScreen    = document.getElementById('callScreen');
         const callStatus    = document.getElementById('callStatus');
         const acceptCall    = document.getElementById('acceptCall');
@@ -400,18 +452,21 @@
             if (pic) document.querySelectorAll('.profile-pic, .caller-avatar').forEach(p => p.innerHTML = `<img src="${pic}">`);
         }
 
+        // ---------- FILE ATTACH ----------
+        attachButton.addEventListener('click', () => fileInput.click());
+
         // ---------- SOCKET ----------
         function initializeSocket() {
             socket = io();
 
             socket.on('connect', () => {
-                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Connected';
+                document.getElementById('connectionStatus').innerHTML = 'Connected';
                 document.getElementById('connectionStatus').classList.add('connected');
                 socket.emit('user-login', { username: currentUser });
             });
 
             socket.on('disconnect', () => {
-                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Disconnected';
+                document.getElementById('connectionStatus').innerHTML = 'Disconnected';
                 document.getElementById('connectionStatus').classList.remove('connected');
             });
 
