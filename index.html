@@ -26,7 +26,7 @@
             display:flex;overflow:hidden;display:none;
         }
 
-        /* Sidebar */
+        /* ---------- SIDEBAR ---------- */
         .sidebar{width:30%;min-width:300px;background:var(--sidebar);
                  border-right:1px solid var(--border);display:flex;flex-direction:column;}
         .profile-header{background:var(--primary-dark);color:#fff;padding:15px;
@@ -61,7 +61,7 @@
         .chat-meta{text-align:right;}
         .chat-time{font-size:11px;color:var(--light);margin-bottom:4px;}
 
-        /* Chat Area */
+        /* ---------- CHAT AREA ---------- */
         .chat-area{flex:1;display:flex;flex-direction:column;background:#e5ddd5;}
         .chat-header{background:var(--sidebar);padding:15px 20px;
                      display:flex;align-items:center;justify-content:space-between;
@@ -101,15 +101,13 @@
                      font-size:18px;}
         .send-button:hover{background:var(--primary-dark);}
 
-        /* Login Screen */
+        /* ---------- LOGIN SCREEN ---------- */
         .login-screen{position:absolute;top:0;left:0;right:0;bottom:0;
                       background:linear-gradient(135deg,var(--primary),var(--primary-dark));
                       display:flex;justify-content:center;align-items:center;z-index:2000;}
         .login-container{background:#fff;border-radius:15px;padding:40px;
                          width:90%;max-width:400px;text-align:center;
                          box-shadow:0 10px 30px rgba(0,0,0,.3);}
-        
-        /* Mango Love Title - SAME YELLOW GRADIENT AS 1 & 2 */
         .login-title{
             background: var(--mango-gradient);
             -webkit-background-clip: text;
@@ -119,10 +117,7 @@
             font-weight: 800;
             letter-spacing: 1px;
             margin-bottom: 16px;
-            text-align: center;
-            display: inline-block;
         }
-
         .login-subtitle{color:var(--light);margin-bottom:30px;font-size:16px;}
 
         .user-selection{display:flex;flex-direction:column;gap:16px;margin-bottom:24px;}
@@ -170,7 +165,7 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-container">
             <h2 class="login-title">Mango Love</h2>
-            <p class="login-subtitle">Select baby to start loving</p>
+            <p class="login-subtitle">Select your baby to start loving</p>
 
             <div class="user-selection">
                 <div class="user-card" data-user="mango1">
@@ -256,24 +251,53 @@
         </div>
     </div>
 
+    <!-- CALL SCREEN -->
+    <div class="call-screen" id="callScreen">
+        <div class="caller-info">
+            <div class="caller-avatar">
+                <div class="default-avatar"><i class="fas fa-user"></i></div>
+            </div>
+            <div class="caller-name" id="callerName">Your Love</div>
+            <div class="call-status" id="callStatus">Calling...</div>
+            <div class="video-container" id="videoContainer">
+                <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+            </div>
+        </div>
+        <div class="call-controls">
+            <div class="call-button accept-call" id="acceptCall"><i class="fas fa-phone"></i></div>
+            <div class="call-button reject-call" id="rejectCall"><i class="fas fa-phone-slash"></i></div>
+        </div>
+        <div class="call-button end-call" id="endCall" style="display:none;"><i class="fas fa-phone-slash"></i></div>
+    </div>
+
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
 
     <script>
-        let socket, currentUser = '', otherUser = '', localStream, peerConnection,
-            isCallActive = false, currentCallType = '', callEnded = false;
+        // ---------- GLOBALS ----------
+        let socket, currentUser = '', otherUser = '', localStream, remoteStream,
+            peerConnection, isCallActive = false, currentCallType = '', callEnded = false;
 
-        const loginScreen = document.getElementById('loginScreen');
+        // ---------- DOM ----------
+        const loginScreen   = document.getElementById('loginScreen');
         const mainContainer = document.getElementById('mainContainer');
-        const loginButton = document.getElementById('loginButton');
-        const userCards = document.querySelectorAll('.user-card');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
+        const loginButton   = document.getElementById('loginButton');
+        const userCards     = document.querySelectorAll('.user-card');
+        const messageInput  = document.getElementById('messageInput');
+        const sendButton    = document.getElementById('sendButton');
         const messagesContainer = document.getElementById('messagesContainer');
-        const voiceCallBtn = document.getElementById('voiceCallBtn');
-        const videoCallBtn = document.getElementById('videoCallBtn');
-        const userProfilePic = document.getElementById('userProfilePic');
-        const fileInput = document.getElementById('fileInput');
+        const voiceCallBtn  = document.getElementById('voiceCallBtn');
+        const videoCallBtn  = document.getElementById('videoCallBtn');
+        const callScreen    = document.getElementById('callScreen');
+        const callStatus    = document.getElementById('callStatus');
+        const acceptCall    = document.getElementById('acceptCall');
+        const rejectCall    = document.getElementById('rejectCall');
+        const endCall       = document.getElementById('endCall');
+        const videoContainer= document.getElementById('videoContainer');
+        const remoteVideo   = document.getElementById('remoteVideo');
+        const userProfilePic= document.getElementById('userProfilePic');
+        const fileInput     = document.getElementById('fileInput');
 
+        // ---------- LOGIN ----------
         let selectedUser = null;
         userCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -287,87 +311,210 @@
         loginButton.addEventListener('click', () => {
             if (!selectedUser) return;
             currentUser = selectedUser;
-            otherUser = currentUser === 'mango1' ? 'mango2' : 'mango1';
+            otherUser   = currentUser === 'mango1' ? 'mango2' : 'mango1';
 
-            document.getElementById('userName').textContent = currentUser === 'mango1' ? 'Mango 1' : 'Mango 2';
-            document.getElementById('contactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
-            document.getElementById('chatContactName').textContent = otherUser === 'mango1' ? 'Mango 1' : 'Mango 2';
+            document.getElementById('userName').textContent        = currentUser === 'mango1' ? 'Mango 1' : 'Mango 2';
+            document.getElementById('contactName').textContent     = otherUser   === 'mango1' ? 'Mango 1' : 'Mango 2';
+            document.getElementById('chatContactName').textContent = otherUser   === 'mango1' ? 'Mango 1' : 'Mango 2';
+            document.getElementById('callerName').textContent      = otherUser   === 'mango1' ? 'Mango 1' : 'Mango 2';
 
-            loginScreen.style.display = 'none';
+            loginScreen.style.display   = 'none';
             mainContainer.style.display = 'flex';
 
             initializeSocket();
             loadProfilePictures();
         });
 
+        // ---------- PROFILE PIC ----------
+        userProfilePic.addEventListener('click', () => fileInput.click());
+        fileInput.onchange = e => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    const img = `<img src="${ev.target.result}">`;
+                    document.querySelectorAll('.profile-pic, .caller-avatar').forEach(p => p.innerHTML = img);
+                    localStorage.setItem('profilePic', ev.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        function loadProfilePictures() {
+            const pic = localStorage.getItem('profilePic');
+            if (pic) document.querySelectorAll('.profile-pic, .caller-avatar').forEach(p => p.innerHTML = `<img src="${pic}">`);
+        }
+
+        // ---------- SOCKET ----------
         function initializeSocket() {
             socket = io();
+
             socket.on('connect', () => {
                 document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Connected';
                 document.getElementById('connectionStatus').classList.add('connected');
                 socket.emit('user-login', { username: currentUser });
             });
+
             socket.on('disconnect', () => {
                 document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Disconnected';
                 document.getElementById('connectionStatus').classList.remove('connected');
             });
+
             socket.on('user-online', d => { if (d.username === otherUser) updateUserStatus(true); });
             socket.on('user-offline', d => { if (d.username === otherUser) updateUserStatus(false); });
-            socket.on('new-message', m => { if (m.sender === otherUser) addMessage('received', m.text, new Date(m.timestamp)); });
+
+            socket.on('new-message', m => {
+                if (m.sender === otherUser) addMessage('received', m.text, new Date(m.timestamp));
+            });
+
+            // ----- CALL EVENTS -----
+            socket.on('incoming-call', async data => {
+                if (isCallActive || callEnded) return;
+                currentCallType = data.callType;
+                callStatus.textContent = `Incoming ${currentCallType} call...`;
+                callScreen.style.display = 'flex';
+                if (currentCallType === 'video') videoContainer.style.display = 'block';
+                createPeerConnection();
+                if (data.offer) await peerConnection.setRemoteDescription(data.offer);
+            });
+
+            socket.on('call-accepted', async data => {
+                if (peerConnection && data.answer) {
+                    await peerConnection.setRemoteDescription(data.answer);
+                    startCall();
+                }
+            });
+
+            socket.on('call-rejected', () => { if (!callEnded) endCallHandler('Call rejected'); });
+            socket.on('call-ended', () => { if (!callEnded) { callEnded = true; endCallHandler('Call ended'); } });
+            socket.on('ice-candidate', async c => { if (peerConnection) await peerConnection.addIceCandidate(c); });
         }
 
-        function updateUserStatus(o) {
-            const t = o ? 'Online' : 'Offline', d = o ? 'block' : 'none';
-            document.getElementById('userStatus').textContent = t;
-            document.getElementById('chatContactStatus').textContent = t;
-            document.getElementById('onlineIndicator').style.display = d;
-            document.getElementById('chatOnlineIndicator').style.display = d;
+        function updateUserStatus(online) {
+            const txt = online ? 'Online' : 'Offline';
+            const dsp = online ? 'block' : 'none';
+            document.getElementById('userStatus').textContent = txt;
+            document.getElementById('chatContactStatus').textContent = txt;
+            document.getElementById('onlineIndicator').style.display = dsp;
+            document.getElementById('chatOnlineIndicator').style.display = dsp;
         }
 
+        // ---------- MESSAGING ----------
         function sendMessage() {
-            const t = messageInput.value.trim();
-            if (!t || !socket) return;
-            const p = { text: t, sender: currentUser, receiver: otherUser, timestamp: Date.now() };
-            socket.emit('send-message', p);
-            addMessage('sent', t, new Date());
+            const txt = messageInput.value.trim();
+            if (!txt || !socket) return;
+            const payload = { text: txt, sender: currentUser, receiver: otherUser, timestamp: Date.now() };
+            socket.emit('send-message', payload);
+            addMessage('sent', txt, new Date());
             messageInput.value = '';
         }
-
         function addMessage(type, text, time) {
             const div = document.createElement('div');
             div.className = `message message-${type}`;
-            const ts = time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-            div.innerHTML = `<div>${text}</div><div class="message-time">${ts}</div>`;
+            const t = time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+            div.innerHTML = `<div>${text}</div><div class="message-time">${t}</div>`;
             messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
-
         sendButton.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', e => e.key === 'Enter' && sendMessage());
 
-        userProfilePic.addEventListener('click', () => fileInput.click());
-        fileInput.onchange = e => {
-            const f = e.target.files[0];
-            if (f && f.type.startsWith('image/')) {
-                const r = new FileReader();
-                r.onload = ev => {
-                    const img = `<img src="${ev.target.result}">`;
-                    document.querySelectorAll('.profile-pic').forEach(p => p.innerHTML = img);
-                    localStorage.setItem('profilePic', ev.target.result);
-                };
-                r.readAsDataURL(f);
-            }
-        };
-
-        function loadProfilePictures() {
-            const p = localStorage.getItem('profilePic');
-            if (p) document.querySelectorAll('.profile-pic').forEach(el => el.innerHTML = `<img src="${p}">`);
-        }
-
+        // ---------- CALL BUTTONS ----------
         voiceCallBtn.addEventListener('click', () => initiateCall('voice'));
         videoCallBtn.addEventListener('click', () => initiateCall('video'));
+        acceptCall.addEventListener('click', acceptIncomingCall);
+        rejectCall.addEventListener('click', rejectIncomingCall);
+        endCall.addEventListener('click', () => endCallHandler('ended'));
 
-        // Paste your WebRTC functions here (initiateCall, createPeerConnection, etc.)
+        // ---------- WEBRTC ----------
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(configuration);
+
+            if (localStream) {
+                localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+            }
+
+            peerConnection.ontrack = e => {
+                remoteStream = e.streams[0];
+                remoteVideo.srcObject = remoteStream;
+                remoteVideo.onloadedmetadata = () => remoteVideo.play().catch(() => {});
+            };
+
+            peerConnection.onicecandidate = ev => {
+                if (ev.candidate && socket && socket.connected) {
+                    socket.emit('ice-candidate', { target: otherUser, candidate: ev.candidate });
+                }
+            };
+
+            peerConnection.onconnectionstatechange = () => {
+                if (peerConnection.connectionState === 'failed' && !callEnded) {
+                    endCallHandler('Connection failed');
+                }
+            };
+        }
+
+        async function initiateCall(callType) {
+            if (!socket.connected) return alert('Not connected');
+            currentCallType = callType; callEnded = false;
+            try {
+                const constraints = { audio: true, video: callType === 'video' };
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                createPeerConnection();
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('call-user', { target: otherUser, from: currentUser, offer, callType });
+                callStatus.textContent = 'Calling...';
+                callScreen.style.display = 'flex';
+                if (callType === 'video') videoContainer.style.display = 'block';
+            } catch (e) { alert(`Failed to start ${callType} call: ${e.message}`); }
+        }
+
+        async function acceptIncomingCall() {
+            try {
+                const constraints = { audio: true, video: currentCallType === 'video' };
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('accept-call', { from: otherUser, answer });
+                startCall();
+            } catch (e) { endCallHandler('Failed to accept call'); }
+        }
+
+        function rejectIncomingCall() {
+            socket.emit('reject-call', { from: otherUser });
+            endCallHandler('Call rejected');
+        }
+
+        function startCall() {
+            isCallActive = true; callEnded = false;
+            callStatus.textContent = `${currentCallType} call connected`;
+            acceptCall.style.display = 'none';
+            rejectCall.style.display = 'none';
+            endCall.style.display = 'flex';
+            if (currentCallType === 'video') videoContainer.style.display = 'block';
+        }
+
+        function endCallHandler(reason) {
+            if (callEnded) return;
+            callEnded = true; isCallActive = false;
+            callScreen.style.display = 'none';
+            videoContainer.style.display = 'none';
+            if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+            if (peerConnection) { peerConnection.close(); peerConnection = null; }
+            if (socket && socket.connected && reason !== 'Call ended' && reason !== 'Call rejected') {
+                socket.emit('end-call', { target: otherUser });
+            }
+            if (reason && reason !== 'Call rejected' && !reason.includes('Failed')) {
+                addMessage('system', `${currentCallType} call ${reason}`, new Date());
+            }
+        }
     </script>
 </body>
 </html>
