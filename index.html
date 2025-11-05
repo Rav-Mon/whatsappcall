@@ -32,7 +32,7 @@
         .container{
             width:100%;max-width:1400px;height:95vh;background:#fff;
             border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);
-            display:flex;overflow:hidden;display:none;z-index:10;
+            display:flex;overflow:hidden;display:none;z-index:10;position:relative;
         }
 
         /* ---------- SIDEBAR ---------- */
@@ -71,7 +71,7 @@
         .chat-time{font-size:11px;color:var(--light);margin-bottom:4px;}
 
         /* ---------- CHAT AREA ---------- */
-        .chat-area{flex:1;display:flex;flex-direction:column;background:#FAFDF9;}
+        .chat-area{flex:1;display:flex;flex-direction:column;background:#FAFDF9;position:relative;}
         .chat-header{background:var(--sidebar);padding:15px 20px;
                      display:flex;align-items:center;justify-content:space-between;
                      border-bottom:1px solid var(--border);}
@@ -98,57 +98,60 @@
                         font-size:13px;padding:8px 16px;border-radius:12px;}
         .message-time{font-size:11px;opacity:.8;margin-top:4px;text-align:right;}
 
-        /* ---------- INPUT BAR - FULLY VISIBLE & ICON SEND ---------- */
+        /* ---------- INPUT BAR - 100% VISIBLE & FIXED ---------- */
         .message-input-container{
-            padding:12px 16px;
+            padding:14px 18px;
             background:var(--sidebar);
             display:flex;
             align-items:center;
-            gap:10px;
+            gap:12px;
             border-top:1px solid var(--border);
-            min-height:62px;
-            z-index:20;
+            min-height:68px;
+            z-index:100;
+            position:relative;
+            width:100%;
         }
         .input-actions{
             display:flex;
-            gap:12px;
+            gap:14px;
             align-items:center;
         }
         .input-actions i{
             cursor:pointer;
-            font-size:22px;
+            font-size:23px;
             color:var(--primary);
             transition:.2s;
         }
-        .input-actions i:hover{transform:scale(1.1);}
+        .input-actions i:hover{transform:scale(1.15);}
         .message-input{
             flex:1;
             border:none;
-            border-radius:24px;
-            padding:11px 18px;
+            border-radius:26px;
+            padding:12px 20px;
             outline:none;
-            font-size:15px;
+            font-size:15.5px;
             background:#fff;
-            box-shadow:0 1px 3px rgba(0,0,0,.1);
-            min-height:44px;
+            box-shadow:0 2px 5px rgba(0,0,0,.08);
+            min-height:48px;
+            resize:none;
         }
         .send-button{
             background:var(--primary);
             color:#fff;
             border:none;
-            width:46px;
-            height:46px;
+            width:50px;
+            height:50px;
             border-radius:50%;
             cursor:pointer;
             display:flex;
             align-items:center;
             justify-content:center;
-            font-size:19px;
+            font-size:20px;
             flex-shrink:0;
-            box-shadow:0 2px 6px rgba(16,185,129,.3);
+            box-shadow:0 3px 8px rgba(16,185,129,.35);
             transition:.2s;
         }
-        .send-button:hover{background:var(--primary-dark);transform:scale(1.05);}
+        .send-button:hover{background:var(--primary-dark);transform:scale(1.08);}
 
         /* ---------- LOGIN SCREEN ---------- */
         .login-screen{position:absolute;top:0;left:0;right:0;bottom:0;
@@ -198,7 +201,7 @@
                            font-size:14px;z-index:1000;display:flex;align-items:center;gap:6px;}
         .connection-status.connected{background:var(--secondary);color:#fff;}
 
-        /* ---------- CALL SCREEN - ICONS ONLY ---------- */
+        /* ---------- CALL SCREEN - NO ECHO ---------- */
         .call-screen{
             position:fixed;top:0;left:0;right:0;bottom:0;
             background:#000;color:#fff;
@@ -246,10 +249,10 @@
             .container{flex-direction:column;height:100vh;border-radius:0;}
             .sidebar{width:100%;height:30%;min-width:auto;}
             .chat-area{width:100%;height:70%;}
-            .message-input-container{padding:10px 14px;gap:8px;}
-            .message-input{font-size:14.5px;padding:9px 14px;}
-            .send-button{width:42px;height:42px;font-size:17px;}
-            .input-actions i{font-size:20px;}
+            .message-input-container{padding:12px 14px;gap:10px;}
+            .message-input{font-size:15px;padding:10px 16px;}
+            .send-button{width:46px;height:46px;font-size:18px;}
+            .input-actions i{font-size:21px;}
             .call-button{width:65px;height:65px;font-size:26px;}
             .local-video{width:80px;height:110px;bottom:10px;right:10px;}
             .login-container{padding:30px;}
@@ -340,7 +343,7 @@
                 </div>
             </div>
 
-            <!-- INPUT BAR - ICON SEND BUTTON -->
+            <!-- INPUT BAR - 100% VISIBLE -->
             <div class="message-input-container">
                 <div class="input-actions">
                     <i class="fas fa-smile"></i>
@@ -354,7 +357,7 @@
         </div>
     </div>
 
-    <!-- CALL SCREEN - ICONS ONLY -->
+    <!-- CALL SCREEN -->
     <div class="call-screen" id="callScreen">
         <div class="caller-info">
             <div class="caller-avatar">
@@ -365,7 +368,7 @@
 
             <div class="video-container" id="videoContainer">
                 <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
-                <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+                <video id="localVideo" class="local-video" autoplay playsinline></video>
             </div>
         </div>
 
@@ -536,7 +539,7 @@
         rejectCall.addEventListener('click', rejectIncomingCall);
         endCall.addEventListener('click', () => endCallHandler('ended'));
 
-        // ---------- WEBRTC ----------
+        // ---------- WEBRTC - NO ECHO ----------
         const configuration = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -549,7 +552,9 @@
 
             if (localStream) {
                 localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+                // Mute local video audio output only
                 localVideo.srcObject = localStream;
+                localVideo.muted = true;
             }
 
             peerConnection.ontrack = e => {
@@ -574,9 +579,13 @@
             if (!socket.connected) return alert('Not connected');
             currentCallType = callType; callEnded = false;
             try {
-                const constraints = { audio: true, video: callType === 'video' };
+                const constraints = { 
+                    audio: { echoCancellation: true, noiseSuppression: true }, 
+                    video: callType === 'video' 
+                };
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 localVideo.srcObject = localStream;
+                localVideo.muted = true; // Prevent echo
                 createPeerConnection();
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -589,9 +598,13 @@
 
         async function acceptIncomingCall() {
             try {
-                const constraints = { audio: true, video: currentCallType === 'video' };
+                const constraints = { 
+                    audio: { echoCancellation: true, noiseSuppression: true }, 
+                    video: currentCallType === 'video' 
+                };
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
                 localVideo.srcObject = localStream;
+                localVideo.muted = true; // Critical: Prevents echo
                 localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
