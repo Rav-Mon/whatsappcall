@@ -18,12 +18,12 @@
         body{
             background:linear-gradient(135deg,var(--primary),var(--primary-dark));
             height:100vh;display:flex;justify-content:center;align-items:center;
-            padding:10px;overflow:hidden;
+            padding:10px;overflow:hidden;position:relative;
         }
         .container{
             width:100%;max-width:1400px;height:95vh;background:#fff;
             border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,.2);
-            display:flex;overflow:hidden;display:none;
+            display:flex;overflow:hidden;display:none;z-index:10;
         }
 
         /* ---------- SIDEBAR ---------- */
@@ -62,7 +62,7 @@
         .chat-time{font-size:11px;color:var(--light);margin-bottom:4px;}
 
         /* ---------- CHAT AREA ---------- */
-        .chat-area{flex:1;display:flex;flex-direction:column;background:#e5ddd5;}
+        .chat-area{flex:1;display:flex;flex-direction:column;background:#e5ddd5;position:relative;}
         .chat-header{background:var(--sidebar);padding:15px 20px;
                      display:flex;align-items:center;justify-content:space-between;
                      border-bottom:1px solid var(--border);}
@@ -89,8 +89,12 @@
                         font-size:13px;padding:8px 16px;border-radius:12px;}
         .message-time{font-size:11px;opacity:.8;margin-top:4px;text-align:right;}
 
-        .message-input-container{padding:15px 20px;background:var(--sidebar);
-                                 display:flex;align-items:center;gap:12px;}
+        /* INPUT BAR - FIXED VISIBILITY */
+        .message-input-container{
+            padding:15px 20px;background:var(--sidebar);
+            display:flex;align-items:center;gap:12px;
+            border-top:1px solid var(--border);position:relative;z-index:20;
+        }
         .input-actions{display:flex;gap:15px;}
         .input-actions i{cursor:pointer;font-size:22px;color:var(--primary);}
         .message-input{flex:1;border:none;border-radius:20px;padding:12px 20px;
@@ -148,10 +152,10 @@
                            font-size:14px;z-index:1000;}
         .connection-status.connected{background:var(--secondary);}
 
-        /* ---------- CALL SCREEN (MOBILE-FRIENDLY) ---------- */
+        /* ---------- CALL SCREEN (MOBILE + VIDEO) ---------- */
         .call-screen{
             position:fixed;top:0;left:0;right:0;bottom:0;
-            background:rgba(0,0,0,0.95);color:#fff;
+            background:#000;color:#fff;
             display:none;flex-direction:column;justify-content:space-between;
             align-items:center;padding:20px;z-index:3000;
         }
@@ -168,9 +172,15 @@
         .video-container{
             width:100%;max-width:400px;height:50vh;
             background:#000;border-radius:12px;overflow:hidden;
-            margin:20px 0;display:none;
+            margin:20px 0;position:relative;display:none;
         }
-        .remote-video{width:100%;height:100%;object-fit:contain;}
+        .remote-video{width:100%;height:100%;object-fit:cover;}
+        .local-video{
+            position:absolute;bottom:15px;right:15px;
+            width:100px;height:140px;border-radius:8px;
+            border:2px solid #fff;overflow:hidden;z-index:10;
+            object-fit:cover;
+        }
 
         .call-controls{
             display:flex;gap:30px;justify-content:center;width:100%;
@@ -188,16 +198,18 @@
             .container{flex-direction:column;height:100vh;border-radius:0;}
             .sidebar{width:100%;height:30%;min-width:auto;}
             .chat-area{width:100%;height:70%;}
+            .message-input-container{padding:12px 16px;}
             .call-button{width:65px;height:65px;font-size:26px;}
             .caller-name{font-size:22px;}
             .call-status{font-size:16px;}
+            .local-video{width:80px;height:110px;bottom:10px;right:10px;}
         }
     </style>
 </head>
 <body>
 
     <div class="connection-status" id="connectionStatus">
-        <i class="fas fa-wifi"></i> Connecting...
+        Connected
     </div>
 
     <!-- LOGIN SCREEN -->
@@ -226,23 +238,23 @@
         <div class="sidebar">
             <div class="profile-header">
                 <div class="profile-pic" id="userProfilePic">
-                    <div class="default-avatar"><i class="fas fa-user"></i></div>
+                    <div class="default-avatar">User</div>
                 </div>
                 <div class="profile-info">
                     <div class="profile-name" id="userName">User</div>
                     <div class="profile-status" id="userStatus">Offline</div>
                 </div>
                 <div class="header-icons">
-                    <div class="icon"><i class="fas fa-circle-notch"></i></div>
-                    <div class="icon"><i class="fas fa-comment-alt"></i></div>
-                    <div class="icon"><i class="fas fa-ellipsis-v"></i></div>
+                    <div class="icon">Status</div>
+                    <div class="icon">Chat</div>
+                    <div class="icon">More</div>
                 </div>
             </div>
 
             <div class="chat-list">
                 <div class="chat-item active">
                     <div class="chat-avatar">
-                        <div class="default-avatar"><i class="fas fa-user"></i></div>
+                        <div class="default-avatar">User</div>
                         <div class="online-indicator" id="onlineIndicator" style="display:none;"></div>
                     </div>
                     <div class="chat-details">
@@ -258,7 +270,7 @@
             <div class="chat-header">
                 <div class="chat-header-info">
                     <div class="chat-header-avatar">
-                        <div class="default-avatar"><i class="fas fa-user"></i></div>
+                        <div class="default-avatar">User</div>
                         <div class="online-indicator" id="chatOnlineIndicator" style="display:none;"></div>
                     </div>
                     <div>
@@ -267,9 +279,9 @@
                     </div>
                 </div>
                 <div class="chat-header-actions">
-                    <div class="icon" id="voiceCallBtn" title="Voice Call"><i class="fas fa-phone-alt"></i></div>
-                    <div class="icon" id="videoCallBtn" title="Video Call"><i class="fas fa-video"></i></div>
-                    <div class="icon"><i class="fas fa-ellipsis-v"></i></div>
+                    <div class="icon" id="voiceCallBtn" title="Voice Call">Phone</div>
+                    <div class="icon" id="videoCallBtn" title="Video Call">Video</div>
+                    <div class="icon">More</div>
                 </div>
             </div>
 
@@ -279,34 +291,38 @@
                 </div>
             </div>
 
+            <!-- INPUT BAR - NOW VISIBLE -->
             <div class="message-input-container">
                 <div class="input-actions">
-                    <i class="fas fa-smile"></i>
-                    <i class="fas fa-paperclip" id="attachButton"></i>
+                    <div class="icon">Smile</div>
+                    <div class="icon" id="attachButton">Attach</div>
                 </div>
                 <input type="text" class="message-input" placeholder="Type a message..." id="messageInput">
-                <button class="send-button" id="sendButton"><i class="fas fa-paper-plane"></i></button>
+                <button class="send-button" id="sendButton">Send</button>
             </div>
         </div>
     </div>
 
-    <!-- CALL SCREEN (MOBILE-OPTIMIZED) -->
+    <!-- CALL SCREEN WITH LOCAL + REMOTE VIDEO -->
     <div class="call-screen" id="callScreen">
         <div class="caller-info">
             <div class="caller-avatar">
-                <div class="default-avatar"><i class="fas fa-user"></i></div>
+                <div class="default-avatar">User</div>
             </div>
             <div class="caller-name" id="callerName">Your Love</div>
             <div class="call-status" id="callStatus">Calling...</div>
+
             <div class="video-container" id="videoContainer">
                 <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+                <video id="localVideo" class="local-video" autoplay playsinline muted></video>
             </div>
         </div>
+
         <div class="call-controls">
-            <div class="call-button accept-call" id="acceptCall"><i class="fas fa-phone"></i></div>
-            <div class="call-button reject-call" id="rejectCall"><i class="fas fa-phone-slash"></i></div>
+            <div class="call-button accept-call" id="acceptCall">Accept</div>
+            <div class="call-button reject-call" id="rejectCall">Reject</div>
         </div>
-        <div class="call-button end-call" id="endCall"><i class="fas fa-phone-slash"></i></div>
+        <div class="call-button end-call" id="endCall">End</div>
     </div>
 
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
@@ -331,8 +347,9 @@
         const acceptCall    = document.getElementById('acceptCall');
         const rejectCall    = document.getElementById('rejectCall');
         const endCall       = document.getElementById('endCall');
-        const videoContainer= document.getElementById('videoContainer');
+        const videoContainer = document.getElementById('videoContainer');
         const remoteVideo   = document.getElementById('remoteVideo');
+        const localVideo    = document.getElementById('localVideo');
         const userProfilePic= document.getElementById('userProfilePic');
         const fileInput     = document.getElementById('fileInput');
 
@@ -388,13 +405,13 @@
             socket = io();
 
             socket.on('connect', () => {
-                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Connected';
+                document.getElementById('connectionStatus').innerHTML = 'Connected';
                 document.getElementById('connectionStatus').classList.add('connected');
                 socket.emit('user-login', { username: currentUser });
             });
 
             socket.on('disconnect', () => {
-                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-wifi"></i> Disconnected';
+                document.getElementById('connectionStatus').innerHTML = 'Disconnected';
                 document.getElementById('connectionStatus').classList.remove('connected');
             });
 
@@ -405,7 +422,7 @@
                 if (m.sender === otherUser) addMessage('received', m.text, new Date(m.timestamp));
             });
 
-            // ----- CALL EVENTS -----
+            // CALL EVENTS
             socket.on('incoming-call', async data => {
                 if (isCallActive || callEnded) return;
                 currentCallType = data.callType;
@@ -477,12 +494,12 @@
 
             if (localStream) {
                 localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+                localVideo.srcObject = localStream;
             }
 
             peerConnection.ontrack = e => {
                 remoteStream = e.streams[0];
                 remoteVideo.srcObject = remoteStream;
-                remoteVideo.onloadedmetadata = () => remoteVideo.play().catch(() => {});
             };
 
             peerConnection.onicecandidate = ev => {
@@ -504,6 +521,7 @@
             try {
                 const constraints = { audio: true, video: callType === 'video' };
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                localVideo.srcObject = localStream;
                 createPeerConnection();
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -518,6 +536,7 @@
             try {
                 const constraints = { audio: true, video: currentCallType === 'video' };
                 localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                localVideo.srcObject = localStream;
                 localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
